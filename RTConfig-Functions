@@ -1,0 +1,130 @@
+# Functions Start
+
+function _DirDelete {
+    param ($DirectoryPath)
+
+    If (Test-Path $DirectoryPath) {    
+        $GB = [math]::round((Get-ChildItem $DirectoryPath -Recurse | Measure-Object -Property Length -Sum).Sum / 1GB,2)
+        Write-Host "$DirectoryPath has been found and is $GB GB in size"
+        remove-item $DirectoryPath -Recurse -Force -ErrorAction SilentlyContinue
+        If ($LASTEXITCODE -eq 0) {
+            Write-Host "Deleted folder $DirectoryPath freeing up $GB GB of space."
+        } else {
+            Write-Host "Error deleting folder $DirectoryPath"
+        }
+        
+    } else {
+        Write-Host "$DirectoryPath does not exist"
+    }
+} # _DirDelete
+
+function _DirDeleteContents {
+    param ($DirectoryPath)
+
+    If (Test-Path $DirectoryPath) {    
+        $GB = [math]::round((Get-ChildItem $DirectoryPath -Recurse | Measure-Object -Property Length -Sum).Sum / 1GB,2)
+        Write-Host "$DirectoryPath has been found and is $GB GB in size"
+        remove-item $DirectoryPath\* -Recurse -Force -ErrorAction SilentlyContinue
+#        If ($LASTEXITCODE -eq 0) {
+#            Write-Host "Deleted contents of folder $DirectoryPath freeing up $GB GB of space."
+#        } else {
+#            Write-Host "Error deleting contents of folder $DirectoryPath"
+#        }   
+    } else {
+        Write-Host "$f does not exist"
+    }
+} # _DirDeleteContents
+
+function _ErrorMsg {
+    param (
+        $ErrorMessage
+    )
+        $global:ErrO = $ErrorMessage
+        $global:ErrN++
+}
+
+function _Get-UptimeDays {
+    param (
+    )
+    $Uptime = New-TimeSpan (get-date (Get-CimInstance -ClassName Win32_OperatingSystem).LastBootUpTime) (get-Date)
+    Return [math]::Round($uptime.TotalDays,2)
+}
+
+function _IEXRun {
+    param (
+        $Command,
+        $Message
+    )
+
+    Write-Host Running $Command -ForegroundColor Gray
+    $Output = IEX $Command
+
+    If ($Output -match $Message) {
+        Write-Host SUCCESS: Successfully ran command: $Command -ForegroundColor Green
+        return $true
+    } else {
+        Write-Host WARNING: Possible failure running command: $Command -ForegroundColor Yellow
+        Write-Host Log Output below: -ForegroundColor Yellow
+        Write-Host $Output -ForegroundColor Yellow
+        return $false
+    }
+}
+
+function _InputWait {
+    param (
+        $Prompt
+    )
+
+    While (1) {
+        Write-Host $Prompt
+        Write-Host Type YES to begin fix
+        Write-Host Type NO begin skip fix
+
+        $Choice = Read-Host
+
+        If ($Choice -eq "YES") {
+            Return $true
+        } elseif ($Choice -eq "NO") {
+            Return $false
+        } else {
+            Write-Host INVALID ENTRY DETECTED -ForegroundColor Yellow
+            Write-Host
+        }
+    }
+}
+
+function _Msg {
+    param (
+         $Type,
+         $Message,
+         [bool]$NoTimeStamp=$false
+     )
+     If (!($NoTimeStamp)) {$TimeStamp = Get-Date -Format "yyyyMMdd-HHmmss"}+"  "
+ 
+     If ($Message) {
+         if ($Type -eq "Info") {
+            Write-Host "$TimeStamp`INFO:     $Message" -foregroundcolor white
+         } elseif ($Type -eq "Pass") {
+            Write-Host "$TimeStamp`SUCCESS:  $Message" -foregroundcolor green
+         } elseif ($Type -eq "Warn") {
+            Write-Host "$TimeStamp`WARNING:  $Message" -foregroundcolor Yellow
+         } elseif ($Type -eq "Fail") {
+            Write-Host "$TimeStamp`FAILURE:  $Message" -foregroundcolor red
+         } else {
+            Write-Host "$Message"
+         }
+     }
+}
+
+function _RunRTFunction {
+    param (
+         $Function
+     )
+ 
+     If ($Function) {
+        iwr -useb "$gURL$Function" | iex
+        _Msg -type "Info" -Message "Launching function: $gURL$Function"
+     }
+}
+
+# Functions End
