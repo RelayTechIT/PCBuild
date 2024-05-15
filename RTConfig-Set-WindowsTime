@@ -1,81 +1,94 @@
-# System Time Clock Sync Check
-$TZ = Get-TimeZone
-$TS = Get-Service "Windows Time" | select *
-$w32tm = w32tm /query /status
-If ($W32TmErr) {Remove-Variable W32tmErr}
+Function _RTWinTimeFix {
+    param(
+        [Parameter(Mandatory=$false)]
+        [string] $TimeZone,
+        [Parameter(Mandatory=$false)]
+        [string] $TimeServer
+        )
 
-$Err = 0
-Write-Host "Windows Time check on system: "$ENV:COMPUTERNAME
-If ($TZ.id -eq 'Eastern Standard Time') {
-    Write-Host "    PASS    Time Zome:          "$TZ.Id -ForegroundColor Green
-} else {
-    Write-Host "    FAIL    Time Zome:          "$TZ.Id -ForegroundColor Red
-    $Err = $Err + 1
-}
-If ($TZ.BaseUtcOffset -eq '-05:00:00') {
-    Write-Host "    PASS    UTC Offset:          "$TZ.BaseUtcOffset -ForegroundColor Green
-} else {
-    Write-Host "    FAIL    UTC Offset:          "$TZ.BaseUtcOffset -ForegroundColor Red
-    $Err = $Err + 1
-}
-If ($TS.Status -eq 'Running') {
-    Write-Host "    PASS    Time Service Status:          "$TS.Status -ForegroundColor Green
-} else {
-    Write-Host "    FAIL    Time Service Status:          "$TS.Status -ForegroundColor Red
-    $Err = $Err + 1
-}
-If ($TS.StartType -eq 'Automatic') {
-    Write-Host "    PASS    Time Service Startup:          "$TS.StartType -ForegroundColor Green
-} else {
-    Write-Host "    FAIL    Time Service Startup:          "$TS.StartType -ForegroundColor Red
-    $Err = $Err + 1
-}
+    If ($TimeZone) {
+        Write-Host "Checking TimeZone: $TimeZone"
 
-foreach ($l in $w32tm) {
-    Switch ($l)
-    {
-        {$_ -match "Last Successful Sync Time:"} {
-#            Write-Host "Last Successful Sync:" $l.Split(':',2)[1].trim()
-            $LastSync = $l.Split(':',2)[1].trim()
-        }
-        {$_ -match "Source:"} {
-#            Write-Host "Source:" $l.Split(':',2)[1].trim()
-            $Source = $l.Split(':',2)[1].trim()
-        }
-        {$_ -match "The following error occurred:"} {
-            $W32tmErr = $l.Split(':',2)[1].trim()
-        }
+        $TZ = Get-TimeZone -ListAvailable
+        $Match = 0
+        foreach ($Z in $TZ) {
+            If ($Z.id -match $TimeZone) {
+                If ($Z.Id.Length -eq $TimeZone.Length) {
+#                    Write-Host "Match on $TimeZone"
+                    $Match = $Match + 1
+                }
+            }
     }
-}
 
-If (!($W32tmErr)) {
-    If ($Source -eq 'time.cloudflare.com') {
-        Write-Host "    PASS    Current Time Server:          "$Source -ForegroundColor Green
+    If ($Match -eq 1) {
+        Write-Host "SUCCESS: Match found for $TimeZone" -ForegroundColor Green
     } else {
-        Write-Host "    FAIL    Current Time Server:          "$Source -ForegroundColor Red
-        $Err = $Err + 1
+        Write-Host "FAILURE: No match found for $TimeZone" -ForegroundColor Red
+        Return
     }
-    If ($Source -eq 'time.cloudflare.com') {
-        Write-Host "    PASS    Last Time Server Sync:          "$LastSync -ForegroundColor Green
+
+    $GetTZ = Get-TimeZone
+#    Write-Host "Current TimeZone is:" $GetTz.Id
+
+    If ($GetTZ.Id -ne $TimeZone) {
+        Set-TimeZone $TimeZone
+        If ($?) {
+            Write-Host SUCCESS: Timezone set to from $GetTZ.Id to $TimeZone -ForegroundColor Green
+        } else {
+            Write-Host FAILURE: Error setting timezone rom $GetTZ.Id to $TimeZone -ForegroundColor Red
+        }
     } else {
-        Write-Host "    FAIL    Last Time Server Sync:          "$LastSync -ForegroundColor Red
-        $Err = $Err + 1
+        Write-Host "GENERAL: Timezone already set to: $TimeZone" -ForegroundColor Yellow
     }
-} else {
-    Write-Host Error running W32tm. Error message: $W32tmErr -ForegroundColor Red
-    $Err = $Err + 1
+
+    }
+
+    If ($TimeServer) {
+        Write-Host "Checking Timeserver: $TimeServer"
+
+        $Test = Test-NetConnection -ComputerName $TimeServer -InformationLevel "Detailed"
+        If ($Test.PingSucceeded -eq "True") {
+            Write-Host "SUCCESS: Connection test successful for Time Server: $TimeZone" -ForegroundColor Green
+        } else {
+            Write-Host "FAILURE: Connection test Unsuccessful for Time Server: $TimeZone" -ForegroundColor Red
+            Return
+        }
+
+        Get-Service "Windows Time" | Stop-Service
+            If ($?) {
+                Write-Host "SUCCESS: Stopped Service: 'Windows Time'" -ForegroundColor Green
+            } else {
+                Write-Host "FAILURE: Error stopping Service: 'Windows Time'" -ForegroundColor Red
+            }
+        
+
+        Start-Process w32tm -ArgumentList "/unregister" -Wait -NoNewWindow
+        Start-Process w32tm -ArgumentList "/register" -Wait -NoNewWindow
+
+        get-service "Windows Time" | Set-Service -StartupType Automatic
+            If ($?) {
+                Write-Host "SUCCESS: Set Service: 'Windows Time' to Automatic" -ForegroundColor Green
+            } else {
+                Write-Host "FAILURE: Error serring service: 'Windows Time' to Automatic" -ForegroundColor Red
+            }
+
+        Get-Service "Windows Time" | Start-Service
+            If ($?) {
+                Write-Host "SUCCESS: Started Service: 'Windows Time'" -ForegroundColor Green
+            } else {
+                Write-Host "FAILURE: Error starting Service: 'Windows Time'" -ForegroundColor Red
+            }
+
+        Start-Process w32tm -ArgumentList "/config /manualpeerlist:$TimeServer /syncfromflags:manual /update" -Wait -NoNewWindow
+        Start-Process w32tm -ArgumentList "/config /update" -Wait -NoNewWindow
+        Start-Process w32tm -ArgumentList "/resync /rediscover" -Wait -NoNewWindow
+
+        Write-Host "SUCCESS: Finished resetting Windows Time Server Settings" -ForegroundColor Green
+        Start-Process w32tm -ArgumentList "/query /status" -Wait -NoNewWindow
+    }
 }
 
-If ($Err -gt 0) {
-    If (_InputWait -Prompt "One or more Windows Time Settings are incorrect. Fix now?") {
-        Write-Host Starting Windows Time Fix
-        $TS = 'time.cloudflare.com'
-        $TZ = 'Eastern Standard Time'
-        iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/PublicRepo/main/WindowsTimeFix' | IEX
-    } else {
-        Write-Host "Skipping Windows Time Fix"
-    }
-} else {
-    Write-Host
-    Write-Host "SUCCESS: All Windows Time checks successful." -ForegroundColor Green
-}
+If (!($TS)) {$TS = read-host -prompt 'Enter value for Time Server'}
+If (!($TZ)) {$TZ = read-host -prompt 'Enter value for Time Zone'}
+
+_RTWinTimeFix -TimeServer $TS -TimeZone $TZ
