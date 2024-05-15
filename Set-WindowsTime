@@ -1,0 +1,81 @@
+# System Time Clock Sync Check
+$TZ = Get-TimeZone
+$TS = Get-Service "Windows Time" | select *
+$w32tm = w32tm /query /status
+If ($W32TmErr) {Remove-Variable W32tmErr}
+
+$Err = 0
+Write-Host "Windows Time check on system: "$ENV:COMPUTERNAME
+If ($TZ.id -eq 'Eastern Standard Time') {
+    Write-Host "    PASS    Time Zome:          "$TZ.Id -ForegroundColor Green
+} else {
+    Write-Host "    FAIL    Time Zome:          "$TZ.Id -ForegroundColor Red
+    $Err = $Err + 1
+}
+If ($TZ.BaseUtcOffset -eq '-05:00:00') {
+    Write-Host "    PASS    UTC Offset:          "$TZ.BaseUtcOffset -ForegroundColor Green
+} else {
+    Write-Host "    FAIL    UTC Offset:          "$TZ.BaseUtcOffset -ForegroundColor Red
+    $Err = $Err + 1
+}
+If ($TS.Status -eq 'Running') {
+    Write-Host "    PASS    Time Service Status:          "$TS.Status -ForegroundColor Green
+} else {
+    Write-Host "    FAIL    Time Service Status:          "$TS.Status -ForegroundColor Red
+    $Err = $Err + 1
+}
+If ($TS.StartType -eq 'Automatic') {
+    Write-Host "    PASS    Time Service Startup:          "$TS.StartType -ForegroundColor Green
+} else {
+    Write-Host "    FAIL    Time Service Startup:          "$TS.StartType -ForegroundColor Red
+    $Err = $Err + 1
+}
+
+foreach ($l in $w32tm) {
+    Switch ($l)
+    {
+        {$_ -match "Last Successful Sync Time:"} {
+#            Write-Host "Last Successful Sync:" $l.Split(':',2)[1].trim()
+            $LastSync = $l.Split(':',2)[1].trim()
+        }
+        {$_ -match "Source:"} {
+#            Write-Host "Source:" $l.Split(':',2)[1].trim()
+            $Source = $l.Split(':',2)[1].trim()
+        }
+        {$_ -match "The following error occurred:"} {
+            $W32tmErr = $l.Split(':',2)[1].trim()
+        }
+    }
+}
+
+If (!($W32tmErr)) {
+    If ($Source -eq 'time.cloudflare.com') {
+        Write-Host "    PASS    Current Time Server:          "$Source -ForegroundColor Green
+    } else {
+        Write-Host "    FAIL    Current Time Server:          "$Source -ForegroundColor Red
+        $Err = $Err + 1
+    }
+    If ($Source -eq 'time.cloudflare.com') {
+        Write-Host "    PASS    Last Time Server Sync:          "$LastSync -ForegroundColor Green
+    } else {
+        Write-Host "    FAIL    Last Time Server Sync:          "$LastSync -ForegroundColor Red
+        $Err = $Err + 1
+    }
+} else {
+    Write-Host Error running W32tm. Error message: $W32tmErr -ForegroundColor Red
+    $Err = $Err + 1
+}
+
+If ($Err -gt 0) {
+    If (_InputWait -Prompt "One or more Windows Time Settings are incorrect. Fix now?") {
+        Write-Host Starting Windows Time Fix
+        $TS = 'time.cloudflare.com'
+        $TZ = 'Eastern Standard Time'
+        iwr -useb 'https://raw.githubusercontent.com/RelayTechIT/PublicRepo/main/WindowsTimeFix' | IEX
+    } else {
+        Write-Host "Skipping Windows Time Fix"
+    }
+} else {
+    Write-Host
+    Write-Host "SUCCESS: All Windows Time checks successful." -ForegroundColor Green
+}
