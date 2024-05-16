@@ -1,0 +1,17 @@
+$ErrorActionPreference = 'Stop'
+try {
+    $p = Start-Process choco -WindowStyle Hidden -ArgumentList "-v" -PassThru -Wait
+    If ($p.ExitCode -eq 0) {
+        Write-Host "Chocolatey is installed and running version $v"
+    } else {
+        Write-Host "Installing Chocolatey"
+
+        Set-ExecutionPolicy Bypass -Scope Process -Force; 
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; 
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')); 
+        choco feature enable -n allowGlobalConfirmation   
+    }
+}
+catch {
+    Write-Host "An error occurred:" $_ -ForegroundColor Red
+}
