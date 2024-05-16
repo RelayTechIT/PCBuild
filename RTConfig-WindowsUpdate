@@ -1,0 +1,37 @@
+$ErrorActionPreference = 'Stop'
+
+While (!$GetWin) {
+    try {
+        Write-Host "Checking for available Windows Updates..."
+        $GetWin = Get-WindowsUpdate
+        If ($GetWin) {Write-Host "There are" $Getwin.Count "packages waiting to be installed."
+            try {
+                Write-Host "Installing Windows Updates..."
+                Install-WindowsUpdate -MicrosoftUpdate -AcceptAll -IgnoreReboot
+                Break;
+            }
+            catch {
+                Write-Host "An error occurred:" $_ -ForegroundColor Red
+                Break;
+            }
+        } else {
+            Write-Host "There are currently no Windows Updates to apply" -ForegroundColor Yellow
+            Break;
+        }
+    }
+    catch {
+        try {
+            If (!($GetWin)) {
+                Write-Host "Windows Update Module is not installed. Installing it now." -ForegroundColor Yellow
+                    If ((Get-ExecutionPolicy) -ne "RemoteSigned") {Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force; };
+                    if (!(Get-PackageProvider -ListAvailable -Name NuGet)) {Get-PackageProvider -Name NuGet -Force};
+                    if (!(Get-Module -ListAvailable -Name PSWindowsUpdate)) {Install-Module -Name PSWindowsUpdate -Force};
+                        Get-Package -Name PSWindowsUpdate -Force; 
+                    $GetWin = Get-WindowsUpdate
+            }   
+        }
+        catch {
+            Write-Host "An error occurred:" $_ -ForegroundColor Red
+        }
+    }
+}
