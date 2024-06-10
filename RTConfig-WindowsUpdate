@@ -1,6 +1,8 @@
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
+remove-variable GetWin
+
 While (!$GetWin) {
     try {
         Write-Host "Checking for available Windows Updates..."
