@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-remove-variable GetWin
+remove-variable GetWin -ea silentlycontinue
 
 While (!$GetWin) {
     try {
