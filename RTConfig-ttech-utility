@@ -1,31 +1,37 @@
-  $jsonfile="{
-  "WPFTweaks":  [
-                  "WPFTweaksRestorePoint",
-                  "WPFTweaksWifi",
-                  "WPFTweaksDisableipsix",
-                  "WPFTweaksHome",
-                  "WPFTweaksStorage",
-                  "WPFTweaksHiber",
-                  "WPFTweaksDVR",
-                  "WPFTweaksTele",
-                  "WPFTweaksAH",
-                  "WPFTweaksEndTaskOnTaskbar",
-                  "WPFTweaksLoc",
-                  "WPFTweaksOO",
-                  "WPFTweaksServices",
-                  "WPFTweaksTeredo",
-                  "WPFTweaksDeleteTempFiles",
-              ],
-"Install":  [
-
-            ],
-"WPFInstall":   [
+$jsonfileName = 'rt-ttech-settings.json'
+$jsonfileData = '{
+    "WPFTweaks":  [
+                      "WPFTweaksRestorePoint",
+                      "WPFTweaksWifi",
+                      "WPFTweaksDisableipsix",
+                      "WPFTweaksHome",
+                      "WPFTweaksStorage",
+                      "WPFTweaksHiber",
+                      "WPFTweaksDVR",
+                      "WPFTweaksTele",
+                      "WPFTweaksAH",
+                      "WPFTweaksEndTaskOnTaskbar",
+                      "WPFTweaksLoc",
+                      "WPFTweaksOO",
+                      "WPFTweaksDiskCleanup",
+                      "WPFTweaksServices",
+                      "WPFTweaksTeredo",
+                      "WPFTweaksDeleteTempFiles",
+                      "WPFTweaksPowershell7"
+                  ],
+    "Install":  [
 
                 ],
-"WPFFeature":  [
+    "WPFInstall":  [
 
-            ]
-}
-  "
+                   ],
+    "WPFFeature":  [
 
+                   ]
+}'
+      
+Write-Host "Creating json file: $($env:windir)\temp\$($jsonfileName)"
+$jsonfileData | out-file "$($env:windir)\temp\$jsonfileName"
+
+irm https://christitus.com/win | iex
 iwr -useb https://christitus.com/win | iex
