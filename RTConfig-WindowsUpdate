@@ -1,4 +1,5 @@
 $ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
 
 While (!$GetWin) {
     try {
@@ -23,9 +24,24 @@ While (!$GetWin) {
         try {
             If (!($GetWin)) {
                 Write-Host "Windows Update Module is not installed. Installing it now." -ForegroundColor Yellow
-                    If ((Get-ExecutionPolicy) -ne "RemoteSigned") {Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force; };
-                    if (!(Get-PackageProvider -ListAvailable -Name NuGet)) {Get-PackageProvider -Name NuGet -Force};
-                    if (!(Get-Module -ListAvailable -Name PSWindowsUpdate)) {Install-Module -Name PSWindowsUpdate -Force};
+                    If ((Get-ExecutionPolicy) -ne "RemoteSigned") {
+                        Write-Host "Setting ExecutionPolicy to RemoteSigned" -foreground yellow
+                        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Force; 
+                    } else {
+                        Write-Host "ExecutionPolicy already set to RemoteSigned" -foreground green
+                    };
+                    if (!(Get-PackageProvider -ListAvailable -Name NuGet -ea silentlycontinue)) {
+                        Write-Host "Getting PackageProvider NuGet" -ForegroundColor yellow
+                        Get-PackageProvider -Name NuGet -Force
+                    } else {
+                        Write-Host "PackageProvider NuGet already present" -ForegroundColor green
+                    };
+                    if (!(Get-Module -ListAvailable -Name PSWindowsUpdate -ea silentlycontinue)) {
+                        Write-Host "Installing Module PSWindowsUpdate" -ForegroundColor Yellow
+                        Install-Module -Name PSWindowsUpdate -Force
+                    } else {
+                        Write-Host "PSWindowsUpdate is installed" -ForegroundColor Green
+                    };
                         Get-Package -Name PSWindowsUpdate -Force; 
                     $GetWin = Get-WindowsUpdate
             }   
