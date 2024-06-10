@@ -1,6 +1,7 @@
-$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'SilentlyContinue'
 $p = Start-Process choco -WindowStyle Hidden -ArgumentList "-v" -PassThru -Wait
 
+$ErrorActionPreference = 'Stop'
 try {
     If ($p.ExitCode -eq 0) {
         Write-Host "Chocolatey is installed and running version $v"
