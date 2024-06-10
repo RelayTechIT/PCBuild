@@ -1,9 +1,10 @@
 $ErrorActionPreference = 'SilentlyContinue'
-$v = Start-Process choco -WindowStyle Hidden -ArgumentList "-v" -PassThru -Wait
+$p = Start-Process choco -WindowStyle Hidden -ArgumentList "-h" -PassThru -Wait
 
 $ErrorActionPreference = 'Stop'
 try {
-    If ($v.ExitCode -eq 0) {
+    If ($p.ExitCode -eq 0) {
+        $v = choco -v
         Write-Host "Chocolatey is installed and running version $v"
     } else {
         Write-Host "Installing Chocolatey"
