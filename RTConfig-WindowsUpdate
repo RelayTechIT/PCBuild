@@ -45,7 +45,7 @@ While (!$GetWin) {
                         Write-Host "PSWindowsUpdate is installed" -ForegroundColor Green
                     };
                         Get-Package -Name PSWindowsUpdate -Force; 
-                    $GetWin = Get-WindowsUpdate
+#                    $GetWin = Get-WindowsUpdate
             }   
         }
         catch {
