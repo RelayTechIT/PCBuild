@@ -1,3 +1,8 @@
+
+$ProgressPreference = 'SilentlyContinue'
+# $LclDir = 'C:\RTSupport\Utilities\Google\GCPW'
+# if (!(test-path $LclDir)) {new-item $LclDir -itemtype Directory -force}
+
 <# This script downloads Google Credential Provider for Windows from
 https://tools.google.com/dlpage/gcpw/, then installs and configures it.
 Windows administrator access is required to use the script. #>
