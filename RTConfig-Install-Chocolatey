@@ -1,20 +1,29 @@
-$ErrorActionPreference = 'SilentlyContinue'
-$p = Start-Process choco -WindowStyle Hidden -ArgumentList "-h" -PassThru -Wait
 
 $ErrorActionPreference = 'Stop'
-try {
-    If ($p.ExitCode -eq 0) {
-        $v = choco -v
-        Write-Host "Chocolatey is installed and running version $v"
-    } else {
-        Write-Host "Installing Chocolatey"
 
-        Set-ExecutionPolicy Bypass -Scope Process -Force; 
-        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; 
-        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1')); 
-        choco feature enable -n allowGlobalConfirmation   
+function _Reinstall-Chocolatey {
+    $ChocoDir = "c:\programdata\chocolatey"
+    if (test-path $ChocoDir -ea silentlycontinue) {
+            $RenamedTo = "$($ChocoDir)_$(get-date -Format 'yyyyMMddhhmmss')_backup"
+            rename-item $ChocoDir $RenamedTo -force
+            Write-Host "Renamed $($ChocoDir) to $($RenamedTo)"
     }
+
+        # Install Chocolatey
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        choco feature enable -n allowGlobalConfirmation
+
+        # Copy any previously installed Apps back into new Chocolatey install
+        gci "$($RenamedTo)\lib" -Directory -Exclude "Chocolatey" | foreach {
+            copy-item $_ "$($ChocoDir)\lib" -Recurse
+        }
+}
+
+try {
+    choco -v > $null
 }
 catch {
-    Write-Host "An error occurred:" $_ -ForegroundColor Red
+    _Reinstall-Chocolatey
 }
