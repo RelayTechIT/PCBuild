@@ -1,0 +1,58 @@
+$ErrorActionPreference   =  'Stop'
+$ProgressPreference      =  'SilentlyContinue'
+
+$TimeZone    =  "Eastern Standard Time"
+$TimeServer  =  "time.cloudflare.com"
+
+$CurrentTimeZone = Get-TimeZone | select -ExpandProperty StandardName
+$CurrentTimeServer = (w32tm /query /status | where {$_ -match "Source:"}).split(" ")[1]
+
+Try {
+  if ((Get-ComputerInfo).CsPartOfDomain) {
+    Throw "$($ENV:Computername) is part of domain $((Get-ComputerInfo).CsPartOfDomain). Time is set by domain controller."
+  }
+
+  # Check Timezone and set if needed
+    if ($CurrentTimeZone -eq $TimeZone) {
+      Write-Host "Time zone already set to $($TimeZone)"
+    } else {
+      Set-TimeZone $TimeZone
+      Write-Host "Timezone set to $($TimeZone) successfully" -ForegroundColor Green
+    }
+
+  # Check Timeserver and set if needed
+    if ($CurrentTimeZone -eq $TimeZone) {
+      Write-Host "Time Server already set to $($TimeServer)"
+    } else {
+      $Test = Test-NetConnection -ComputerName $TimeServer -InformationLevel "Detailed"
+        Write-Host "Timeserver is active"
+      Start-Process w32tm -ArgumentList "/config /manualpeerlist:$TimeServer /syncfromflags:manual /update" -Wait -NoNewWindow
+      Start-Process w32tm -ArgumentList "/config /update" -Wait -NoNewWindow
+      Start-Process w32tm -ArgumentList "/resync /rediscover" -Wait -NoNewWindow
+        Write-Host "Successfully set windows time server to $($TimeServer)" -ForegroundColor Green
+    }
+
+  Get-Service "Windows Time" | Stop-Service
+  Start-Process w32tm -ArgumentList "/unregister" -Wait -NoNewWindow
+  Start-Process w32tm -ArgumentList "/register" -Wait -NoNewWindow
+  Get-Service "Windows Time" | Start-Service
+  Start-Process w32tm -ArgumentList "/query /status" -Wait -NoNewWindow
+
+}
+catch {
+  Write-Host "An error occurred: $($_)"
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
