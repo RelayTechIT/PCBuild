@@ -1,0 +1,54 @@
+$ErrorActionPreference  =  'Stop'
+$ProgressPreference     =  'SilentlyContinue'
+
+<# This script downloads Google Credential Provider for Windows from
+https://tools.google.com/dlpage/gcpw/, then installs and configures it.
+Windows administrator access is required to use the script. #>
+
+# $LclDir = 'C:\RTSupport\Utilities\Google\GCPW'
+
+try {
+  If (!($domainsAllowedToLogin)) {Throw "You must specify one or more domains allowed to login. Script cannot continue."}
+
+  Add-Type -AssemblyName System.Drawing
+  Add-Type -AssemblyName PresentationFramework
+
+  <# Choose the GCPW file to download. 32-bit and 64-bit versions have different names #>
+    $gcpwFileName = 'gcpwstandaloneenterprise.msi'
+      if ([Environment]::Is64BitOperatingSystem) {
+        $gcpwFileName = 'gcpwstandaloneenterprise64.msi'
+      }
+
+  <# Download the GCPW installer. #>
+    $gcpwUrlPrefix = 'https://dl.google.com/credentialprovider/'
+    $gcpwUri = $gcpwUrlPrefix + $gcpwFileName
+      Write-Host 'Downloading GCPW from' $gcpwUri
+    Invoke-WebRequest -Uri $gcpwUri -OutFile $gcpwFileName
+
+  <# Run the GCPW installer and wait for the installation to finish #>
+  $arguments = "/i `"$gcpwFileName`""
+  $installProcess = (Start-Process msiexec.exe -ArgumentList $arguments -PassThru -Wait)
+
+  <# Check if installation was successful #>
+    if ($installProcess.ExitCode -ne 0) {
+      Throw "Error installing GPCW"
+    } else {
+      Write-Host "Installation completed successfully!"
+    }
+
+  <# Set the required registry key with the allowed domains #>
+    $registryPath = 'HKEY_LOCAL_MACHINE\Software\Google\GCPW'
+    $name = 'domains_allowed_to_login'
+    [microsoft.win32.registry]::SetValue($registryPath, $name, $domainsAllowedToLogin)
+
+  $domains = Get-ItemPropertyValue HKLM:\Software\Google\GCPW -Name $name
+
+  if ($domains -eq $domainsAllowedToLogin) {
+    Write-Host "Configuration completed successfully!"
+  } else {
+    Throw "Could not write to registry. Configuration was not completed."
+  }
+}
+catch {
+  Write-Host "An error has occurred $($_)"
+}
