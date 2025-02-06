@@ -1,0 +1,9 @@
+$ErrorActionPreference  =   "Stop"
+$ProgressPreference     =   'silentlycontinue'
+
+try {
+  Get-NetAdapterBinding | Where {$_.ComponentID -eq "ms_tcpip6"} | Where {$_.Enabled} | Disable-NetAdapterBinding
+}
+catch {
+  Write-Host "An error occurred: $($_)"
+}
