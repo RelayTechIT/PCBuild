@@ -1,0 +1,27 @@
+Try {
+    choco -v > $null
+}
+catch {
+    Try {
+        $ChocoDir = "$($ENV:programdata)\chocolatey"
+        if (test-path $ChocoDir -ea silentlycontinue) {
+                $RenamedTo = "$($ChocoDir)_$(get-date -Format 'yyyyMMddhhmmss')_backup"
+                rename-item $ChocoDir $RenamedTo -force
+                Write-Host "Renamed $($ChocoDir) to $($RenamedTo)"
+        }
+
+        # Install Chocolatey
+            Set-ExecutionPolicy Bypass -Scope Process -Force
+            [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+            iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+            choco feature enable -n allowGlobalConfirmation
+
+        # Copy any previously installed Apps back into new Chocolatey install
+            gci "$($RenamedTo)\lib" -Directory -Exclude "Chocolatey" | foreach {
+                copy-item $_ "$($ChocoDir)\lib" -Recurse
+            }
+    }
+    catch {
+        Write-Host "An error has occurred $($_)"
+    }
+}
