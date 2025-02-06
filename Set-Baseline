@@ -1,0 +1,38 @@
+$ErrorActionPreference = 'Stop'
+$ProgressPreference    =  'SilentlyContinue'
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+
+Try {
+  If (!$u) {Throw "Missing required paremeter. Script cannot continue."}
+  If (!$p) {Throw "Missing required paremeter. Script cannot continue."}
+
+  # Disable these accounts if they are enabled
+    $Disable = "Administrator","Guest"
+    $Disable | foreach {
+      if ((Get-LocalUser -Name $_).enabled) {
+        Disable-localuser -Name $_
+        Write-Host "Successfully set local account $($_) to disabled."
+      } else {
+        Write-Host "Confirmed local account $($_) set to disabled."
+      }
+    }
+
+  #Setup Local Account
+    if (Get-LocalUser -Name $u -ea silentlycontinue) {
+        Write-host "Local User $($u) already exists:"    
+    } else {
+        New-LocalUser -Name $u -password $p
+        Write-host "Created Local User $($u):"    
+    }
+    Set-LocalUser -Name $u -AccountNeverExpires
+        Write-host "    - Account set to never expire"
+    Set-LocalUser -Name $u -PasswordNeverExpires $true
+        Write-host "    - Password set to never expire"
+    Set-LocalUser -Name $u -Password $p
+        Write-host "    - Password Reset"
+    Add-LocalGroupMember -Group "Administrators" -Member "$u" -ea silentlycontinue
+        Write-Host "    - Added to the $($g) local group"
+}
+catch {
+  Write-Host "An error has occurred: $($_)"
+}
