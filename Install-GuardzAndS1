@@ -1,0 +1,122 @@
+<#
+# Custom Guardz Installer
+
+    The install script provided by Guardz wasn't working using Atera so I wrote one.
+        - Installs Guardz Agent using specified Org key
+    
+    Specify your own Org key and local install directory
+#>
+
+$ErrorActionPreference  =   "Stop"
+$ProgressPreference     =   'silentlycontinue'
+
+# Different key and token per client
+
+# Set lclPath to your local repository or a temp directory
+$lclPath                =   "C:\RTSupport\GuardzAgent"
+
+$ProcessName            =   "Guardz Agent"
+$InstallerName          =   "$($ProcessName)`.msi"
+$Version                =   ""
+$VersionQueryParam      =   ""
+$InstallerTempPath      =   Join-Path $lclPath $InstallerName
+$DownloadURL            =   "https://app.us.guardz.com/api/device-agent/download/windows$VersionQueryParam"
+$DataDir                =   "$($env:ProgramData)\com.guardz"
+$StateFilePath          =   "$DataDir\auth-state.json"
+$Directories            =   $lclPath,$DataDir
+
+# Guardz Agent Reinstall
+
+Try {
+    # If key is missing throw an exception
+    if (!($key)) {
+        Throw "Organization Key is missing. Setup cannot continue."
+    }
+
+    # Create directories if they don't exist
+    $Directories | foreach {
+        if (!(test-path $_ -ea silentlycontinue)) {new-item -itemtype Directory -force -path $_ > $null}
+    }  
+    if ($Version.Length -gt 0) {$VersionQueryParam = "?version=$Version"}
+    if (Test-Path $InstallerTempPath) {Remove-Item -Path $InstallerTempPath -Force}
+    iwr -useb -Uri $DownloadURL -OutFile $InstallerTempPath
+
+    [System.IO.File]::WriteAllLines($StateFilePath, "{""organization_key"":""$Key""}")
+    $InstallerProcess = Start-Process msiexec.exe -Wait -PassThru -ArgumentList "/I ""$InstallerTempPath"" /qn"
+    if ($InstallerProcess.ExitCode -ne 0) {
+        throw "Unable to install Guardz device agent."
+    } else {
+        Write-Host "$($ProcessName) installed successfully"
+    }
+}
+catch {
+    Write-Host "An error occurred: $($_)"
+}
+
+<#
+# Custom SentinelOne Agent Installer
+
+    The install script provided by Guardz for SentinelOne wasn't working in my RMM so I wrote one.
+        - Installs SentinelOne Agent using pre-specified Guardz Org key and SentinelOne Site Token
+    
+    You must specify your own Guardz Org Key and SentinelOne Site Token before launching this script.
+#>
+
+# Custom RT SentinelOne Agent Installer
+
+# Set lclPath to your local repository or a temp directory
+$lclPath                =   "C:\RTSupport\SentinelAgent\"
+$ProcessName            =   "Sentinel Agent"
+$Directories            =   "C:\ProgramData\Sentinel","C:\Program Files\SentinelOne"
+$Services = "Sentinel Agent", "SentinelHelperService", "SentinelOne Static Service"
+$Processes = "SentinelAgent", "SentinelHelperService", "SentinelMemoryScanner", "SentinelServiceHost", "SentinelStaticEngine", "SentinelStaticEngineScanner", "SentinelStaticEngineScanner", "SentinelUI"
+$agent_file_url="https://device-agent.app.us.guardz.com/api/device/agent-gateway/endpoint/installer/sentinel-one/2091575863798863607"
+$agent_file_name="SentinelOneInstaller_windows_64bit_v24_1_5_277.exe"
+
+# Script Start
+
+Try {
+    # If key is missing throw an exception
+        if (!($key)) {
+            Throw "Organization Key is missing. Setup cannot continue."
+        } else {
+            Write-Host "Organization Key is present. Setup can continue."
+        }
+
+        if (!($Token)) {
+            Throw "Site Token is missing. Setup cannot continue."
+        } else {
+            Write-Host "Site Token is present. Setup can continue."
+        }
+
+    # If already installed throw an exception
+        $app = Get-WmiObject -Class Win32_Product -Filter "Name = '$($ProcessName)'"
+        if ($app.name.count -gt 0) {
+            Throw "$($ProcessName) already installed. $($app.name) $($app.version)"
+        } else {
+            Write-Host "Agent not yet installed. Setup can continue."
+        } 
+
+    # Install Agent
+        Write-Host "$($ProcessName) not installed on system"
+
+            if (!(test-path $lclPath)) {New-Item  -ItemType "directory"  $lclPath}
+            $agent_file_path = (Join-Path  $lclPath $agent_file_name)
+
+            $apiHeaders = @{"Authorization"="Bearer $key"}
+            $agent_signed_url = Invoke-RestMethod -Uri $agent_file_url -Headers $apiHeaders -Method Get
+
+            Invoke-RestMethod -Uri $agent_signed_url -OutFile $agent_file_path -Method Get 
+
+        $InstallerProcess = Start-Process $agent_file_path -Wait -PassThru -ArgumentList "-t $token -q"
+
+        $app = Get-WmiObject -Class Win32_Product -Filter "Name = '$($ProcessName)'"
+            if ($app.name.count -gt 0) {
+                Write-Host "$($ProcessName) installed successfully"
+                Write-Host "    $($app.name)"
+                Write-Host "    $($app.version)"
+            }
+}
+Catch {
+    Write-Host "An error has occurred: $($_)"
+}
