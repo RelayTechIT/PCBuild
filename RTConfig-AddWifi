@@ -1,53 +1,53 @@
-function _AddWifi {
-    param(
-    [Parameter(Mandatory=$true)]
-    [string] $SSID,
-    [Parameter(Mandatory=$true)]
-    [string] $PSK
-  )
+$ErrorActionPreference  =   "Stop"
+$ProgressPreference     =   'silentlycontinue'
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 
-  $SSIDHEX=($SSID.ToCharArray() |foreach-object {'{0:X}' -f ([int]$_)}) -join''
-  $xmlfile="<?xml version=""1.0""?>
-  <WLANProfile xmlns=""http://www.microsoft.com/networking/WLAN/profile/v1"">
-      <name>$SSID</name>
-      <SSIDConfig>
-          <SSID>
-              <hex>$SSIDHEX</hex>
-              <name>$SSID</name>
-          </SSID>
-      </SSIDConfig>
-      <connectionType>ESS</connectionType>
-      <connectionMode>auto</connectionMode>
-      <MSM>
-          <security>
-              <authEncryption>
-                  <authentication>WPA2PSK</authentication>
-                  <encryption>AES</encryption>
-                  <useOneX>false</useOneX>
-              </authEncryption>
-              <sharedKey>
-                  <keyType>passPhrase</keyType>
-                  <protected>false</protected>
-                  <keyMaterial>$PSK</keyMaterial>
-              </sharedKey>
-          </security>
-      </MSM>
-  </WLANProfile>
-  "
-    try {
-        Write-Host "Creating xml file: $($ENV:TEMP)\$($Guid.SSID)"
-            $xmlfile | out-file "$($ENV:TEMP)\$guid.SSID"
-        Write-Host "Creating Wifi Profile from XML"
-            netsh wlan add profile filename="$($ENV:TEMP)\$guid.SSID" user=all
-        Write-Host "Removing xml file"
-            remove-item "$($ENV:TEMP)\$guid.SSID" -Force
-    }
-    catch {
-        Write-Host "An error occurred:" $_ -ForegroundColor Red
-    }
+$Name = "AddWifi"
+Try {
+    if (!$SSID) {throw "Missing SSID value required for section $($Name). Cannot continue."}
+    if (!$PSK) {throw "Missing PSK value required for section $($Name). Cannot continue."}
+
+    $guid = New-Guid
+    $HexArray = $ssid.ToCharArray() | foreach-object { [System.String]::Format("{0:X}", [System.Convert]::ToUInt32($_)) }
+    $HexSSID = $HexArray -join ""
+    @"
+    <?xml version="1.0"?>
+    <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+    	<name>$($SSID)</name>
+    	<SSIDConfig>
+    		<SSID>
+    			<hex>$($HexSSID)</hex>
+    			<name>$($SSID)</name>
+    		</SSID>
+    	</SSIDConfig>
+    	<connectionType>ESS</connectionType>
+    	<connectionMode>auto</connectionMode>
+    	<MSM>
+    		<security>
+    			<authEncryption>
+    				<authentication>WPA2PSK</authentication>
+    				<encryption>AES</encryption>
+    				<useOneX>false</useOneX>
+    			</authEncryption>
+    			<sharedKey>
+    				<keyType>passPhrase</keyType>
+    				<protected>false</protected>
+    				<keyMaterial>$($PSK)</keyMaterial>
+    			</sharedKey>
+    		</security>
+    	</MSM>
+    	<MacRandomization xmlns="http://www.microsoft.com/networking/WLAN/profile/v3">
+    		<enableRandomization>false</enableRandomization>
+    		<randomizationSeed>1451755948</randomizationSeed>
+    	</MacRandomization>
+    </WLANProfile>
+    "@ | out-file "$($ENV:TEMP)\$guid.SSID"
+    
+    netsh wlan add profile filename="$($ENV:TEMP)\$guid.SSID" user=all
+    remove-item "$($ENV:TEMP)\$guid.SSID" -Force
+    
+    Write-Host "Successfully Added wifi profile $($SSID)"
 }
-
-If (!$WifiSSID) {read-host "Please enter the SSID:}
-If (!$WifiPSK) {read-host "Please enter the PSK:}
-
-_AddWifi -SSID $SSID -PSK $PSK
+catch {
+    Write-Host "An error occurred: $($_)"
+}
