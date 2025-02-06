@@ -1,4 +1,8 @@
-$ErrorActionPreference = 'Stop'
+
+$ErrorActionPreference  =   "Stop"
+$ProgressPreference     =   'silentlycontinue'
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+
 <#
   Baseline Power Management
     Monitor Timeout
