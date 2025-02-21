@@ -1,53 +1,63 @@
-$ErrorActionPreference  =   "Stop"
-$ProgressPreference     =   'silentlycontinue'
+$ErrorActionPreference = 'Stop'
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 
-$Name = "AddWifi"
-Try {
-    if (!$SSID) {throw "Missing SSID value required for section $($Name). Cannot continue."}
-    if (!$PSK) {throw "Missing PSK value required for section $($Name). Cannot continue."}
+#
+# Script.ps1
+#
 
-    $guid = New-Guid
-    $HexArray = $ssid.ToCharArray() | foreach-object { [System.String]::Format("{0:X}", [System.Convert]::ToUInt32($_)) }
-    $HexSSID = $HexArray -join ""
-    @"
-    <?xml version="1.0"?>
-    <WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
-    	<name>$($SSID)</name>
-    	<SSIDConfig>
-    		<SSID>
-    			<hex>$($HexSSID)</hex>
-    			<name>$($SSID)</name>
-    		</SSID>
-    	</SSIDConfig>
-    	<connectionType>ESS</connectionType>
-    	<connectionMode>auto</connectionMode>
-    	<MSM>
-    		<security>
-    			<authEncryption>
-    				<authentication>WPA2PSK</authentication>
-    				<encryption>AES</encryption>
-    				<useOneX>false</useOneX>
-    			</authEncryption>
-    			<sharedKey>
-    				<keyType>passPhrase</keyType>
-    				<protected>false</protected>
-    				<keyMaterial>$($PSK)</keyMaterial>
-    			</sharedKey>
-    		</security>
-    	</MSM>
-    	<MacRandomization xmlns="http://www.microsoft.com/networking/WLAN/profile/v3">
-    		<enableRandomization>false</enableRandomization>
-    		<randomizationSeed>1451755948</randomizationSeed>
-    	</MacRandomization>
-    </WLANProfile>
-    "@ | out-file "$($ENV:TEMP)\$guid.SSID"
-    
-    netsh wlan add profile filename="$($ENV:TEMP)\$guid.SSID" user=all
-    remove-item "$($ENV:TEMP)\$guid.SSID" -Force
-    
-    Write-Host "Successfully Added wifi profile $($SSID)"
+# Base working Directory
+    $DirBse = $Env:SystemDrive+'\RTSupport'
+    $DirMod = $DirBse+'\Modules'
+    $FileMod = 'RTSupport-Module.psm1'
+
+Function _AddWifi {
+param(
+ [Parameter(Mandatory=$true)]
+ [string] $SSID,
+ [Parameter(Mandatory=$true)]
+ [string] $PSK
+  )
+
+$guid = New-Guid
+$HexArray = $ssid.ToCharArray() | foreach-object { [System.String]::Format("{0:X}", [System.Convert]::ToUInt32($_)) }
+$HexSSID = $HexArray -join ""
+@"
+<?xml version="1.0"?>
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+	<name>$($SSID)</name>
+	<SSIDConfig>
+		<SSID>
+			<hex>$($HexSSID)</hex>
+			<name>$($SSID)</name>
+		</SSID>
+	</SSIDConfig>
+	<connectionType>ESS</connectionType>
+	<connectionMode>auto</connectionMode>
+	<MSM>
+		<security>
+			<authEncryption>
+				<authentication>WPA2PSK</authentication>
+				<encryption>AES</encryption>
+				<useOneX>false</useOneX>
+			</authEncryption>
+			<sharedKey>
+				<keyType>passPhrase</keyType>
+				<protected>false</protected>
+				<keyMaterial>$($PSK)</keyMaterial>
+			</sharedKey>
+		</security>
+	</MSM>
+	<MacRandomization xmlns="http://www.microsoft.com/networking/WLAN/profile/v3">
+		<enableRandomization>false</enableRandomization>
+		<randomizationSeed>1451755948</randomizationSeed>
+	</MacRandomization>
+</WLANProfile>
+"@ | out-file "$($ENV:TEMP)\$guid.SSID"
+
+netsh wlan add profile filename="$($ENV:TEMP)\$guid.SSID" user=all
+
+remove-item "$($ENV:TEMP)\$guid.SSID" -Force
+
 }
-catch {
-    Write-Host "An error occurred: $($_)"
-}
+
+_AddWifi -SSID $SSID -PSK $PSK
