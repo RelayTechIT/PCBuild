@@ -7,8 +7,8 @@ try {
 		Throw "No wifi installed on this machine. Cannot continue."
 	} else {
 		Write-Host "Wireless Adapter found. Beginning wireless profile addition"
-			if (!$SSID) {Throw "Missing Required Variable - SSID - cannot continue.}
-			if (!$PSK) {Throw "Missing Required Variable - PSK - cannot continue.}
+			if (!$SSID) {Throw "Missing Required Variable - SSID - cannot continue."}
+			if (!$PSK) {Throw "Missing Required Variable - PSK - cannot continue."}
 
 		$guid = New-Guid
 		$HexArray = $ssid.ToCharArray() | foreach-object { [System.String]::Format("{0:X}", [System.Convert]::ToUInt32($_)) }
