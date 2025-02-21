@@ -1,12 +1,6 @@
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 $ErrorActionPreference = 'Stop'
-
-<#
-Baseline Whole Body Healthcare - Edge and Chrome Setup
-#>
-
-# Variables Start
-
-# Variables End
+$ProgressPreference    =  'SilentlyContinue'
 
 # Functions Start
 
@@ -40,6 +34,7 @@ param(
 
 # Script Start
 
+Try {
 if ($inidata.SetBrowserDefaults.CompanyLinks) {
   $TopLevelName = "Company Links"
   $Output = '[{"toplevel_name": "Company Links"}'
@@ -51,17 +46,26 @@ if ($inidata.SetBrowserDefaults.CompanyLinks) {
         $Output += ',{"name": "'+$n+'","url": "'+$u+'"}'
       }
     $Output += ']'
+
+ # Add Managed Favorites to Edge and Chrome
+  _Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "ManagedFavorites" -Type String -Value $Output
+  _Reg -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "ManagedBookmarks" -Type String -Value $Output
 }
 
-# Add Managed Favorites to Edge and Chrome
-_Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "ManagedFavorites" -Type String -Value $Output
-_Reg -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "ManagedBookmarks" -Type String -Value $Output
+# If Chrome Extensions specified install them.
+if ($inidata.SetBrowserDefaults.ChromeExtensions) {
+ foreach ($Extension in $inidata.SetBrowserDefaults.ChromeExtensions) {
+  _Reg -Path "HKLM:\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist" -Name "1" -Type String -Value "$($Extension)"
+ }
+}
 
-
-# Install My Apps Secure Sign-In Extension in Edge and Chrome
-_Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist" -Name "1" -Type String -Value "gaaceiggkkiffbfdpmfapegoiohkiipl"
-_Reg -Path "HKLM:\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist" -Name "1" -Type String -Value "ggjhpefgjjfobnfoldnjipclpcfbgbhl"
-
-# Install Guardz Extension
-    _Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist" -Name "1" -Type String -Value "djeifflbhcjfclefjlkoelgnebpiccem"
-    _Reg -Path "HKLM:\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist" -Name "1" -Type String -Value "djeifflbhcjfclefjlkoelgnebpiccem"
+# If Edge Extensions specified install them.
+if ($inidata.SetBrowserDefaults.EdgeExtensions) {
+ foreach ($Extension in $inidata.SetBrowserDefaults.EdgeExtensions) {
+  _Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist" -Name "1" -Type String -Value "$($Extension)"
+ }
+}
+}
+catch {
+ Write-Host "An error occurred: $($_)"
+}
