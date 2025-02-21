@@ -1,0 +1,10 @@
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+$ErrorActionPreference  =   "Stop"
+$ProgressPreference     =   'silentlycontinue'
+
+Try {
+  choco install synology-activebackup-for-business-agent --params="'/Address:$($ABBSvr) /Username:$($ABBUsr) /Password:$($ABBPwd) /RemoveShortcut'"
+}
+catch {
+  Write-Host "An error occurred: $($_)"
+}
