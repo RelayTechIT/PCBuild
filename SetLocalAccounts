@@ -5,6 +5,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 Try {
   If (!$u) {Throw "Missing required paremeter. Script cannot continue."}
   If (!$p) {Throw "Missing required paremeter. Script cannot continue."}
+  $lclP = ConvertTo-SecureString "$p" -AsPlainText -Force
 
   # Disable these accounts if they are enabled
     $Disable = "Administrator","Guest"
@@ -21,14 +22,14 @@ Try {
     if (Get-LocalUser -Name $u -ea silentlycontinue) {
         Write-host "Local User $($u) already exists:"    
     } else {
-        New-LocalUser -Name $u -password $p
+        New-LocalUser -Name $u -password $lclP
         Write-host "Created Local User $($u):"    
     }
     Set-LocalUser -Name $u -AccountNeverExpires
         Write-host "    - Account set to never expire"
     Set-LocalUser -Name $u -PasswordNeverExpires $true
         Write-host "    - Password set to never expire"
-    Set-LocalUser -Name $u -Password $p
+    Set-LocalUser -Name $u -Password $lclP
         Write-host "    - Password Reset"
     Add-LocalGroupMember -Group "Administrators" -Member "$u" -ea silentlycontinue
         Write-Host "    - Added to the Administrators local group"
