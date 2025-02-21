@@ -1,0 +1,67 @@
+$ErrorActionPreference = 'Stop'
+
+<#
+Baseline Whole Body Healthcare - Edge and Chrome Setup
+#>
+
+# Variables Start
+
+# Variables End
+
+# Functions Start
+
+Function _Reg {
+param(
+ [Parameter(Mandatory=$true)]
+ [string] $Path,
+ [Parameter(Mandatory=$true)]
+ [string] $Name,
+    [Parameter(Mandatory=$true)]
+ [string] $Type,
+    [Parameter(Mandatory=$true)]
+ [string] $Value
+  )
+
+    Try {
+        If (!(Test-Path $Path -ErrorAction SilentlyContinue)) {
+            New-Item $Path -Force -ErrorAction SilentlyContinue
+            Write-Host "Created: $Path"
+            New-ItemProperty -Path $Path -Name $Name -Type $Type -Value $Value
+        }
+    }
+    catch {
+        Write-Host "An error occurred: $($_)"
+    }
+    
+
+}
+
+# Functions End
+
+# Script Start
+
+if ($inidata.SetBrowserDefaults.CompanyLinks) {
+  $TopLevelName = "Company Links"
+  $Output = '[{"toplevel_name": "Company Links"}'
+      foreach ($link in $inidata.SetBrowserDefaults.CompanyLinks) {
+        #    Write-Host ",{`"name`": $($link.split('|')[0])`",`"url`": `"$($link.split('|')[1])`"}" 
+        $n = $($link.split('|')[0]).trim()
+        $u = $($link.split('|')[1]).trim()
+        # $Output += ",{`"name`": `"$($n)`",`"url`": `"$($u)`"}"
+        $Output += ',{"name": "'+$n+'","url": "'+$u+'"}'
+      }
+    $Output += ']'
+}
+
+# Add Managed Favorites to Edge and Chrome
+_Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge" -Name "ManagedFavorites" -Type String -Value $Output
+_Reg -Path "HKLM:\SOFTWARE\Policies\Google\Chrome" -Name "ManagedBookmarks" -Type String -Value $Output
+
+
+# Install My Apps Secure Sign-In Extension in Edge and Chrome
+_Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist" -Name "1" -Type String -Value "gaaceiggkkiffbfdpmfapegoiohkiipl"
+_Reg -Path "HKLM:\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist" -Name "1" -Type String -Value "ggjhpefgjjfobnfoldnjipclpcfbgbhl"
+
+# Install Guardz Extension
+    _Reg -Path "HKLM:\SOFTWARE\Policies\Microsoft\Edge\ExtensionInstallForcelist" -Name "1" -Type String -Value "djeifflbhcjfclefjlkoelgnebpiccem"
+    _Reg -Path "HKLM:\SOFTWARE\Policies\Google\Chrome\ExtensionInstallForcelist" -Name "1" -Type String -Value "djeifflbhcjfclefjlkoelgnebpiccem"
