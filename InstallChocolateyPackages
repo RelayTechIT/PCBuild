@@ -1,0 +1,12 @@
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+$ErrorActionPreference = 'Stop'
+$ProgressPreference    =  'SilentlyContinue'
+
+Try {
+  foreach ($Package in $inidata.InstallChocolateyPackages.Packages ) {
+    choco install $Package
+  }
+}
+catch {
+ Write-Host "An error occurred: $($_)"
+}
