@@ -3,9 +3,9 @@ $ProgressPreference    =  'SilentlyContinue'
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 
 Try {
-  If (!$u) {Throw "Missing required paremeter. Script cannot continue."}
-  If (!$p) {Throw "Missing required paremeter. Script cannot continue."}
-  $lclP = ConvertTo-SecureString "$p" -AsPlainText -Force
+  If (!$lclAdm) {Throw "Missing required paremeter. Script cannot continue."}
+  If (!$lclPwd) {Throw "Missing required paremeter. Script cannot continue."}
+  $lclP = ConvertTo-SecureString "$lclPwd" -AsPlainText -Force
 
   # Disable these accounts if they are enabled
     $Disable = "Administrator","Guest"
