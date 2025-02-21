@@ -19,17 +19,17 @@ Try {
     }
 
   #Setup Local Account
-    if (Get-LocalUser -Name $u -ea silentlycontinue) {
-        Write-host "Local User $($u) already exists:"    
+    if (Get-LocalUser -Name $lclAdm -ea silentlycontinue) {
+        Write-host "Local User $($lclAdm) already exists:"    
     } else {
-        New-LocalUser -Name $u -password $lclP
-        Write-host "Created Local User $($u):"    
+        New-LocalUser -Name $lclAdm -password $lclP
+        Write-host "Created Local User $($lclAdm):"
     }
-    Set-LocalUser -Name $u -AccountNeverExpires
+    Set-LocalUser -Name $lclAdm -AccountNeverExpires
         Write-host "    - Account set to never expire"
-    Set-LocalUser -Name $u -PasswordNeverExpires $true
+    Set-LocalUser -Name $lclAdm -PasswordNeverExpires $true
         Write-host "    - Password set to never expire"
-    Set-LocalUser -Name $u -Password $lclP
+    Set-LocalUser -Name $lclAdm -Password $lclP
         Write-host "    - Password Reset"
     Add-LocalGroupMember -Group "Administrators" -Member "$u" -ea silentlycontinue
         Write-Host "    - Added to the Administrators local group"
