@@ -31,7 +31,7 @@ Try {
     Set-LocalUser -Name $u -Password $p
         Write-host "    - Password Reset"
     Add-LocalGroupMember -Group "Administrators" -Member "$u" -ea silentlycontinue
-        Write-Host "    - Added to the $($g) local group"
+        Write-Host "    - Added to the Administrators local group"
 }
 catch {
   Write-Host "An error has occurred: $($_)"
