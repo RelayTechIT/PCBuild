@@ -61,9 +61,13 @@ remove-item "$($ENV:TEMP)\$guid.SSID" -Force
 }
 
 try {
-	if (!$SSID) {Throw "Missing Required Variable - SSID - cannot continue.}
-	if (!$PSK) {Throw "Missing Required Variable - PSK - cannot continue.}
-	_AddWifi -SSID $SSID -PSK $PSK
+	if (Get-NetAdapter | Where-Object InterfaceType -eq 71) {
+		if (!$SSID) {Throw "Missing Required Variable - SSID - cannot continue.}
+		if (!$PSK) {Throw "Missing Required Variable - PSK - cannot continue.}
+		_AddWifi -SSID $SSID -PSK $PSK
+	} else {
+		Throw "No wifi installed on this machine. Cannot continue."
+	}
 }
 catch {
 	write-host "An error occurred: $($_)"
