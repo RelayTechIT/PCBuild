@@ -65,6 +65,7 @@ try {
 			if (!$PSK) {Throw "Missing Required Variable - PSK - cannot continue."}
             _AddWifi -SSID $SSID -PSK $PSK
     }
+}
 catch {
 	write-host "An error occurred: $($_)"
 }
