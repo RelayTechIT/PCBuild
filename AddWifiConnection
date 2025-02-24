@@ -3,14 +3,10 @@ $ErrorActionPreference  =   "Stop"
 $ProgressPreference     =   'silentlycontinue'
 
 
-  
-Function _AddWifi {
-param(
- [Parameter(Mandatory=$true)]
- [string] $SSID,
- [Parameter(Mandatory=$true)]
- [string] $PSK
-  )
+try {
+if (Get-NetAdapter | Where-Object InterfaceType -ne 71) {Throw "No wifi installed on this machine. Cannot continue."}
+if (!$SSID) {Throw "Missing Required Variable - SSID - cannot continue."}
+if (!$PSK) {Throw "Missing Required Variable - PSK - cannot continue."}
 
 $guid = New-Guid
 $HexArray = $ssid.ToCharArray() | foreach-object { [System.String]::Format("{0:X}", [System.Convert]::ToUInt32($_)) }
@@ -53,19 +49,6 @@ netsh wlan add profile filename="$($ENV:TEMP)\$guid.SSID" user=all
 remove-item "$($ENV:TEMP)\$guid.SSID" -Force
 
 }
-
-
-
-try {
-	if (Get-NetAdapter | Where-Object InterfaceType -ne 71) {
-		Throw "No wifi installed on this machine. Cannot continue."
-	} else {
-		Write-Host "Wireless Adapter found. Beginning wireless profile addition"
-			if (!$SSID) {Throw "Missing Required Variable - SSID - cannot continue."}
-			if (!$PSK) {Throw "Missing Required Variable - PSK - cannot continue."}
-    	_AddWifi -SSID $SSID -PSK $PSK
-    	}
-}
 catch {
-	write-host "An error occurred: $($_)"
+    Write-Host "An error has occurred $($_)"
 }
