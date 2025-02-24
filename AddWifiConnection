@@ -63,8 +63,8 @@ try {
 		Write-Host "Wireless Adapter found. Beginning wireless profile addition"
 			if (!$SSID) {Throw "Missing Required Variable - SSID - cannot continue."}
 			if (!$PSK) {Throw "Missing Required Variable - PSK - cannot continue."}
-            _AddWifi -SSID $SSID -PSK $PSK
-    }
+    	_AddWifi -SSID $SSID -PSK $PSK
+    	}
 }
 catch {
 	write-host "An error occurred: $($_)"
