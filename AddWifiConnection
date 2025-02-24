@@ -1,4 +1,4 @@
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -force
 $ProgressPreference	= 'Silentlycontinue'
 $ErrorActionPreference 	= 'Stop'
 
