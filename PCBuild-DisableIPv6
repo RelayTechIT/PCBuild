@@ -3,7 +3,13 @@ $ErrorActionPreference  =   "Stop"
 $ProgressPreference     =   'silentlycontinue'
 
 try {
-  Get-NetAdapterBinding | Where {$_.ComponentID -eq "ms_tcpip6"} | Where {$_.Enabled} | Disable-NetAdapterBinding
+  If (!$DisableIPv6) {Throw "Missing required paremeter. Script cannot continue."}
+  If ($DisableIPv6) {
+    Get-NetAdapterBinding | Where {$_.ComponentID -eq "ms_tcpip6"} | Where {$_.Enabled} | Disable-NetAdapterBinding
+    Write-Host "Successfully disabled IPv6 on all network adapters"
+  } else {
+    Write-Host "The DisableIPv6 variable is not set to true. No action taken."
+  }
 }
 catch {
   Write-Host "An error occurred: $($_)"
