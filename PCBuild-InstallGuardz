@@ -27,7 +27,7 @@ $StateFilePath          =   "$DataDir\auth-state.json"
 $Directories            =   $lclPath,$DataDir
 
 # Guardz Agent Reinstall
-pause
+
 Try {
     # If key is missing throw an exception
     if (!($key)) {
@@ -38,31 +38,26 @@ Try {
         Throw "Guardz Agent already installed. Setup cannot continue."
     }
 
+    Write-Host "Installing Guardz Agent"
     # Create directories if they don't exist
     $Directories | foreach {
-        if (!(test-path $_ -ea silentlycontinue)) {new-item -itemtype Directory -force -path $_ > $null}
+        if (!(test-path $_ -ea silentlycontinue)) {
+            new-item -itemtype Directory -force -path $_ > $null
+            Write-Host "Successfully created directory $($_)"
+        }
     }  
     if ($Version.Length -gt 0) {$VersionQueryParam = "?version=$Version"}
     if (Test-Path $InstallerTempPath) {Remove-Item -Path $InstallerTempPath -Force}
-    iwr -useb -Uri $DownloadURL -OutFile $InstallerTempPath
+        iwr -useb -Uri $DownloadURL -OutFile $InstallerTempPath
 
     [System.IO.File]::WriteAllLines($StateFilePath, "{""organization_key"":""$Key""}")
     $InstallerProcess = Start-Process msiexec.exe -Wait -PassThru -ArgumentList "/I ""$InstallerTempPath"" /qn"
-    if ($InstallerProcess.ExitCode -ne 0) {
-        throw "Unable to install Guardz device agent."
-    } else {
-        Write-Host "$($ProcessName) installed successfully"
-    }
+        if ($InstallerProcess.ExitCode -ne 0) {
+            throw "Unable to install Guardz device agent."
+        } else {
+            Write-Host "$($ProcessName) installed successfully"
+        }
 }
 catch {
     Write-Host "An error occurred: $($_)"
 }
-
-<#
-# Custom SentinelOne Agent Installer
-
-    The install script provided by Guardz for SentinelOne wasn't working in my RMM so I wrote one.
-        - Installs SentinelOne Agent using pre-specified Guardz Org key and SentinelOne Site Token
-    
-    You must specify your own Guardz Org Key and SentinelOne Site Token before launching this script.
-#>
