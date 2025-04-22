@@ -27,7 +27,7 @@ $StateFilePath          =   "$DataDir\auth-state.json"
 $Directories            =   $lclPath,$DataDir
 
 # Guardz Agent Reinstall
-
+pause
 Try {
     # If key is missing throw an exception
     if (!($key)) {
