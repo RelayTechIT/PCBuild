@@ -33,7 +33,7 @@ Try {
     if (!($key)) {
         Throw "Organization Key is missing. Setup cannot continue."
     }
-    $Pkg = get-package -name *Guardz*
+    $Pkg = get-package -name *Guardz* -erroraction silentlycontinue
     if ($Pkg.count -gt 0) {
         Throw "Guardz Agent already installed. Setup cannot continue."
     }
