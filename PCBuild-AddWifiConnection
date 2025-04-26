@@ -4,7 +4,9 @@ $ProgressPreference     =   'silentlycontinue'
 
 
 try {
-if (Get-NetAdapter | Where-Object InterfaceType -ne 71) {Throw "No wifi installed on this machine. Cannot continue."}
+	# if (Get-NetAdapter | where {$_.MediaType -like "*802.11*"}) {"Wireless Detected"} else {"No wireless detected"}
+	# if (Get-NetAdapter | Where-Object InterfaceType -ne 71) {Throw "No wifi installed on this machine. Cannot continue."}
+if (!(Get-NetAdapter | where {$_.InterfaceType -eq 71})) {Throw "No wifi installed on this machine. Cannot continue."} 
 if (!$SSID) {Throw "Missing Required Variable - SSID - cannot continue."}
 if (!$PSK) {Throw "Missing Required Variable - PSK - cannot continue."}
 
