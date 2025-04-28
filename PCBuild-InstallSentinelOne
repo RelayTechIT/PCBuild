@@ -17,7 +17,7 @@ $agent_file_name="SentinelOneInstaller_windows_64bit_v24_1_5_277.exe"
 
 Try {
     # If already installed throw an exception
-        $Pkg = get-package -name "*$($ProcessName)*"
+        $Pkg = get-package -name "*$($ProcessName)*" -erroraction silentlycontinue
         if ($Pkg.count -gt 0) {Throw "Guardz Agent already installed. Setup cannot continue."}
     # If key or token is missing throw an exception
         if (!($key)) {Throw "Organization Key is missing. Setup cannot continue."}
