@@ -1,0 +1,22 @@
+$ErrorActionPreference = 'stop'
+$ProgressPreference = 'silentlycontinue'
+
+$RegPath = "HKLM:\SOFTWARE\WOW6432Node\Splashtop Inc.\Splashtop Remote Server"
+$RegName = "CloudComputerName"
+
+try { 
+    if (test-path $RegPath) {
+        If ((Get-ItemPropertyValue -Path $RegPath -Name $RegName) -eq $ENV:COMPUTERNAME) {
+            Write-Host "$($RegPath) $($RegName) is set to hostname." -ForegroundColor Green
+        } else {
+            Set-ItemProperty -Path $RegPath -Name $RegName -Value $ENV:COMPUTERNAME
+            Write-Host "$($RegPath) $($RegName) is not set to hostname. This has been fixed." -ForegroundColor Yellow
+            Write-Host "Restarting the SplashtopRemoteService - this may kick a remote session..." -ForegroundColor Yellow
+            Get-Service SplashtopRemoteService | restart-service
+            Write-Host "Successfully Restarted SplashtopRemoteService" -ForegroundColor Yellow
+        }
+    }
+}
+catch {
+    Write-Host "An error has occurred: $($_)" -ForegroundColor Red
+}
