@@ -9,10 +9,11 @@ try {
         $h2= read-host -prompt "CONFIRM - RE-ENTER new hostname below and press ENTER to continue";
         if ($h1 -eq $h2) {
             Write-Host "New Hostname is a match! Computer will be renamed to $($h1). Press any key to continue." -ForegroundColor Green
+            Pause
+
             rename-computer -newname $h1
-            Write-Host "Renamed computer to $($h1)" -ForegroundColor Green
-            Set-ItemProperty -Path $RegPath -Name $RegName -Value $ENV:COMPUTERNAME
                 Write-Host "Renamed computer to $($h1)" -ForegroundColor Green
+            Set-ItemProperty -Path $RegPath -Name $RegName -Value $ENV:COMPUTERNAME
                 Write-Host "Set $($RegPath) $($RegName) to $($h1)" -ForegroundColor Green
                 Write-Host ""
                 Write-Host ""
