@@ -1,0 +1,30 @@
+$ErrorActionPreference = 'stop'
+$ProgressPreference = 'silentlycontinue'
+
+$RegPath = "HKLM:\SOFTWARE\WOW6432Node\Splashtop Inc.\Splashtop Remote Server"
+$RegName = "CloudComputerName"
+try { 
+    while (1) {
+        $h1 = read-host -prompt "Type new hostname below and press ENTER to continue"; 
+        $h2= read-host -prompt "CONFIRM - RE-ENTER new hostname below and press ENTER to continue";
+        if ($h1 -eq $h2) {
+            Write-Host "New Hostname is a match! Computer will be renamed to $($h1). Press any key to continue." -ForegroundColor Green
+            rename-computer -newname $h1
+            Write-Host "Renamed computer to $($h1)" -ForegroundColor Green
+            Set-ItemProperty -Path $RegPath -Name $RegName -Value $ENV:COMPUTERNAME
+                Write-Host "Renamed computer to $($h1)" -ForegroundColor Green
+                Write-Host "Set $($RegPath) $($RegName) to $($h1)" -ForegroundColor Green
+                Write-Host ""
+                Write-Host ""
+                Write-Host "Press any key to restart computer and apply changes." -ForegroundColor Yellow
+                pause
+                restart-computer -force
+                break;
+        } else {
+            Write-Host "Hostnames do not match. Press any key to re-enter new hostname." -ForegroundColor Yellow
+        }
+    }
+}
+catch {
+    Write-Host "An error has occurred: $($_)" -ForegroundColor Red
+}
