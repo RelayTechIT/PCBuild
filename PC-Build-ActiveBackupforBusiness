@@ -1,0 +1,65 @@
+$ErrorActionPreference  =   'Stop'
+$ProgressPreference     =   'Silentlycontinue'
+$ABBSvr                 =   "backup.relaytechit.com"
+$ABBVer                 =   "3.0.0-4638"
+$ABBOS                  =   "Windows"
+
+$LclPath = "C:\RTSupport\Software\SynologyActiveBackup"
+# $File = "Synology Active Backup for Business Agent-3.0.0-4638-x64.msi"
+$File = "Synology Active Backup for Business Agent-$($ABBVer)-x64.msi"
+$UriBase = "https://global.synologydownload.com/download/Utility/ActiveBackupBusinessAgent"
+# $Uri = "$($UriBase)/3.0.0-4638/Windows/x86_64/Synology%20Active%20Backup%20for%20Business%20Agent-3.0.0-4638-x64.msi"
+$Uri = "$($UriBase)/$($ABBVer)/$($ABBOS)/x86_64/$($File.Replace(' ','%20'))"
+
+
+
+
+Try {
+  if (!$ABBUsr) {Throw "Required variable missing."}
+  if (!$ABBPwd) {Throw "Required variable missing."}
+    # Remove any old installs of software
+        $PKGWMI = "Synology"
+        $WMIObject=Get-WmiObject -Class Win32_Product | Select * | where Name -Like "*$PKGWMI*"
+            If ($WMIObject.Name.count -eq 1) {
+                (Get-WmiObject Win32_Product -Filter "Name = '$($WMIObject.Name)'").Uninstall() > $null
+                    Write-Host "WMI: WMI found 1 installation of $($WMIObject.Name) and uninstalled it."
+            } elseif ($WMIObject.Name.count -gt 1) {
+                    Write-Host "WMI: WMI found more than 1 installation of $($WMIObject.Name) which is too many. Refine your search and try again."
+            } else {
+                    Write-Host "WMI: WMI did not find an installation of $($WMIObject.Name). No action taken."
+            }
+    
+    # Remove old software folders and files if present
+        $Remove = "$($LclPath)","$($ENV:programdata)\Synology","$($env:ProgramFiles)\Synology\ActiveBackupforBusinessAgent","$(${env:ProgramFiles(x86)})\Synology\ActiveBackupforBusinessAgent","HKLM:\SOFTWARE\Synology"
+            $Remove | foreach {
+                if (test-path "$($_)" -ea silentlycontinue) {
+                    Remove-item "$($_)" -Recurse -Force -ea SilentlyContinue
+                        Write-Host "The path $($_) was found and forcibly removed."
+                } else {
+                        Write-Host "No entry found for $($_). No action taken"
+                }
+            }
+    
+    # Add new Registry entries prior to install
+        $RegPath = "HKLM:\SOFTWARE\Synology\ActiveBackupforBusinessCustom"
+            New-Item -Path $RegPath -force > $null
+                New-ItemProperty -Path $RegPath -Name CustomUUIDPrefix -Value $ABBUniqueString -force > $null
+                    Write-Host "Created the Registry key:$($RegPath) name: CustomUUIDPrefix value: $($ABBUniqueString)"
+
+    # Create local Directory and download installer file
+        If (!(test-path $LclPath)) {new-item $LclPath -itemtype Directory -force}
+            Iwr -uri $Uri -outfile "$($LclPath)\$($File)"
+            Write-Host "Downloaded $($File) to $($LclPath)"
+                $msi = gci -Path $LclPath $File
+
+    # Silently Install the program
+    # This works
+        # Start-Process msiexec -wait -ArgumentList "/i `"$($msi.FullName)`" /qn ADDRESS=`"$($ABBSvr)`" USERNAME=`"$($ABBUsr)`" PASSWORD=`"$($ABBPwd)`" NO_SHORTCUT=1 ALLOW_UNTRUST=1 /Log `"$($LclPath)\ABB_Install.log`""
+        Write-Host "Installing: $($msi.FullName)"
+        Start-Process msiexec -wait -ArgumentList "/i `"$($msi.FullName)`" /qn ADDRESS=`"$($ABBSvr)`" USERNAME=`"$($ABBUsr)`" PASSWORD=`"$($ABBPwd)`" NO_SHORTCUT=1 ALLOW_UNTRUST=1"
+        Write-Host "Successfully Installed: $($msi.FullName)"
+
+} 
+catch {
+    Write-Host "An error has occurred $($_)"
+}
