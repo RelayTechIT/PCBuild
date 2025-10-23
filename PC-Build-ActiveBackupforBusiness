@@ -1,6 +1,6 @@
 $ErrorActionPreference  =   'Stop'
 $ProgressPreference     =   'Silentlycontinue'
-$ABBSvr                 =   "backup.relaytechit.com"
+$ABBSvr                 =   "rtnas-ds1621p.synology.me"
 $ABBVer                 =   "3.0.0-4638"
 $ABBOS                  =   "Windows"
 
