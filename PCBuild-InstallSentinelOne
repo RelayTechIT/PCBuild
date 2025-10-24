@@ -10,8 +10,19 @@ $ProcessName            =   "Sentinel Agent"
 $Directories            =   "C:\ProgramData\Sentinel","C:\Program Files\SentinelOne"
 $Services = "Sentinel Agent", "SentinelHelperService", "SentinelOne Static Service"
 $Processes = "SentinelAgent", "SentinelHelperService", "SentinelMemoryScanner", "SentinelServiceHost", "SentinelStaticEngine", "SentinelStaticEngineScanner", "SentinelStaticEngineScanner", "SentinelUI"
-$agent_file_url="https://device-agent.app.us.guardz.com/api/device/agent-gateway/endpoint/installer/sentinel-one/2091575863798863607"
-$agent_file_name="SentinelOneInstaller_windows_64bit_v24_1_5_277.exe"
+# $agent_file_url="https://device-agent.app.us.guardz.com/api/device/agent-gateway/endpoint/installer/sentinel-one/2091575863798863607"
+# $agent_file_name="SentinelOneInstaller_windows_64bit_v24_1_5_277.exe"
+
+if ((Get-CimInstance Win32_OperatingSystem).OSArchitecture -eq "64-bit") {
+	$agent_file_url="https://device-agent.app.us.guardz.com/api/device/agent-gateway/endpoint/installer/sentinel-one/2274068839163744109"
+    $agent_file_name="SentinelOneInstaller_windows_64bit_v25_1_3_334.exe"
+
+}
+if ((Get-CimInstance Win32_OperatingSystem).OSArchitecture -eq "ARM 64-bit Processor") {
+	$agent_file_url="https://device-agent.app.us.guardz.com/api/device/agent-gateway/endpoint/installer/sentinel-one/2274068111619771263"
+    $agent_file_name="SentinelOneInstaller_windows_arm64_v25_1_3_334.exe"
+}
+
 
 # Script Start
 
