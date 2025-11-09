@@ -15,6 +15,41 @@ $Uri = "$($UriBase)/$($ABBVer)/$($ABBOS)/x86_64/$($File.Replace(' ','%20'))"
 
 
 Try {
+
+$Pkg = "Synology Active Backup for Business"
+$WmiPkg = Get-WmiObject -Class Win32_Product | Select * | where Name -Like "*$Pkg*"
+
+if ($WmiPkg) {
+    Write-Host "$($Pkg) is installed on this system."
+    $Installed = $true
+}
+
+$GetSvc = get-service "*$($Pkg)*"
+if ($GetSvc.Status -eq "Running") {
+    Write-Host "$($Pkg) service is running."
+    $Running = $true
+}
+
+$NetTCP = Get-NetTCPConnection -RemotePort 5510 -ErrorAction SilentlyContinue
+if ($NetTCP.count -gt 0) {
+    Write-Host "$($NetTCP.count) TCP connections open to remote host $($NetTCP.RemoteAddress | select -First 1) on port $($NetTCP.RemotePort | select -First 1)"
+    $Connected = $true
+} else {
+    Write-Host "No TCP Connections open on port 5510"
+    $NotConnected = $true
+}
+
+if (($Installed) -and ($NotConnected)) {
+    Write-Host "$($Pkg) is installed but not connected. Attempting re-installation now."
+}
+if (($Installed) -and ($Connected)) {
+    Throw "$($Pkg) is installed and connected. No action needed."
+}
+if (!($Installed)) {
+    Write-Host "$($Pkg) is not installed. Attempting installation now."
+}
+
+
   if (!$ABBUsr) {Throw "Required variable missing."}
   if (!$ABBPwd) {Throw "Required variable missing."}
     # Remove any old installs of software
