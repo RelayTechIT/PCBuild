@@ -8,6 +8,10 @@ Windows administrator access is required to use the script. #>
 # $LclDir = 'C:\RTSupport\Utilities\Google\GCPW'
 
 try {
+  If (!($domainsAllowedToLogin)) {
+    Write-Host "Enter a domain or domains allowed to login to GCPW:"
+    $domains = read-host
+  }
   If (!($domainsAllowedToLogin)) {Throw "You must specify one or more domains allowed to login. Script cannot continue."}
 
   Add-Type -AssemblyName System.Drawing
