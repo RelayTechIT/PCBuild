@@ -10,7 +10,7 @@ Windows administrator access is required to use the script. #>
 try {
   If (!($domainsAllowedToLogin)) {
     Write-Host "Enter a domain or domains allowed to login to GCPW:"
-    $domains = read-host
+    $domainsAllowedToLogin = read-host
   }
   If (!($domainsAllowedToLogin)) {Throw "You must specify one or more domains allowed to login. Script cannot continue."}
 
