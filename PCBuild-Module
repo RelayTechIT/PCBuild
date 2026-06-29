@@ -165,16 +165,10 @@ function PCBuild-DisableIPv6 {
 
 function PCBuild-SetWindowsTime {
 param (
-        $TimeSettings = "DEFAULT"
+        $TimeZone,
+        $TimeServer
     )
     Try {
-        if ($TimeSettings -eq "DEFAULT") {
-            $TimeZone = “Eastern Standard Time”
-            $TimeServer = “time.cloudflare.com”
-        } else {
-            Throw "You must provide a configuration file to continue. This has not been scripted yet."
-        }
-
         If (!$TimeZone) {Throw "Missing required paremeter: TIMEZONE. Script cannot continue."}
         If (!$TimeServer) {Throw "Missing required paremeter: TIMESERVER. Script cannot continue."}
 
