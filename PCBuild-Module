@@ -143,3 +143,21 @@ function PCBuild-UpdateRegistry {
     New-ItemProperty -Path $RegPath -Name $Regname -Value $RegValue -PropertyType $RegType
     Write-Host "Set $($RegPath) $($RegName) to $($RegValue) type $($RegType)"
 }
+
+
+function PCBuild-DisableIPv6 {
+    param (
+        $DisableIPv6
+    )
+    try {
+        If ($DisableIPv6) {
+            Get-NetAdapterBinding | Where {$_.ComponentID -eq "ms_tcpip6"} | Where {$_.Enabled} | Disable-NetAdapterBinding
+            Write-Host "Successfully disabled IPv6 on all network adapters"
+      } else {
+            Write-Host "The DisableIPv6 variable is not set to true. No action taken."
+      }
+    }
+    catch {
+      Write-Host "An error occurred: $($_)"
+    }
+}
