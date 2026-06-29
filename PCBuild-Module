@@ -10,7 +10,7 @@
 # Description:
 #  Functions to assist with the configuration of new devices
 
-function _CheckForModuleOrPackage {
+function PCBuild-CheckForModuleOrPackage {
     param (
         [Parameter(Mandatory=$true)]
         [string]$PackageOrModuleName,
@@ -33,7 +33,7 @@ function _CheckForModuleOrPackage {
     }
 }
 
-function RTPCBuild-RenameComputer {
+function PCBuild-RenameComputer {
     $ErrorActionPreference = 'stop'
     $ProgressPreference = 'silentlycontinue'
     
