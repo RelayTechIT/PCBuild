@@ -212,3 +212,33 @@ param (
         Write-Host "An error occurred: $($_)"
     }
 }
+
+function PCBuild-RemoveAppxProvisionedPackages {
+param (
+    $Packages
+)
+foreach ($AppxProvPkg in $AppxProvPkgs) {
+        $Pkg = get-appxprovisionedpackage -Online -ea SilentlyContinue | where {$_.DisplayName -like "*$($AppxProvPkg)*"}
+        if ($Pkg) {
+            Write-Host "Removing provisioned package $($Pkg.DisplayName)..." -ForegroundColor Yellow
+            Remove-AppxProvisionedPackage -Online -PackageName $Pkg.PackageName -ea SilentlyContinue
+        } else {
+            Write-Host "Provisioned package $($AppxProvPkg) not found, skipping." -ForegroundColor Green
+        }
+    }
+}
+
+function PCBuild-RemoveAppxPackages {
+param (
+    $Packages
+)
+    foreach ($AppxPkg in $AppxPkgs) {
+        $Pkg = Get-AppxPackage -AllUsers | where {$_.Name -like "*$($AppxPkg)*"}
+        if ($Pkg) {
+                Write-Host "Removing Appx package $($Pkg.Name)..." -ForegroundColor Yellow
+                $Pkg | Remove-AppxPackage -allusers
+            } else {
+                Write-Host "Appx package $($AppxPkg) not found, skipping." -ForegroundColor Green
+            }
+    }
+}
