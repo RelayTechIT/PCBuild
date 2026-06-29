@@ -120,3 +120,26 @@ try {
   Write-Host "An error occurred:" $_ -ForegroundColor Red
 }
 }
+
+
+function PCBuild-UpdateRegistry {
+    param (
+        [Parameter(Mandatory=$true)]
+            [String]$RegPath,
+        [Parameter(Mandatory=$true)]
+            [String]$RegName,
+        [Parameter(Mandatory=$true)]
+            [String]$RegValue,
+        [Parameter(Mandatory=$true)]
+        [ValidateSet("String", "DWord", "Qword", "Binary", "MultiString")]
+            [String]$RegType
+    )
+
+     if (!(Test-Path $RegPath)) {
+        New-Item $RegPath -Force
+    } else {
+            Remove-ItemProperty -Path $RegPath -Name $RegName -Force -ea SilentlyContinue
+    }
+    New-ItemProperty -Path $RegPath -Name $Regname -Value $RegValue -PropertyType $RegType
+    Write-Host "Set $($RegPath) $($RegName) to $($RegValue) type $($RegType)"
+}
