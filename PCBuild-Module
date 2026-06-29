@@ -242,3 +242,26 @@ param (
             }
     }
 }
+
+function Import-SyncroModule {
+   param (
+       $UUID # Defaults to the UUID of the local system or specify another Syncro Asset UUID
+   )
+   # Ensure TLS 1.2 or higher is enabled
+   if ([Net.ServicePointManager]::SecurityProtocol -lt [Net.SecurityProtocolType]::Tls12) {
+       [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+   }
+   # Set up environment variables for Syncro
+   if ($env:SyncroModule -match '^\s*$') {
+       $SyncroRegKey = Get-ItemProperty -Path 'HKLM:\SOFTWARE\WOW6432Node\RepairTech\Syncro' -Name uuid, shop_subdomain
+       $env:RepairTechSyncroApiUrl = "https://${SyncroRegKey.shop_subdomain}.syncromsp.com"
+       $env:RepairTechUUID = if ($UUID -match '^\s*$') { $SyncroRegKey.uuid } else { $UUID }
+       $env:SyncroModule = "$env:ProgramData\Syncro\bin\module.psm1"
+   }
+   # Import the module if compatible
+   if ((Test-Path -Path $env:SyncroModule) -and ($PSVersionTable.PSVersion -ge [system.version]'4.0')) {
+       Import-Module -Name $env:SyncroModule -WarningAction SilentlyContinue
+   } else {
+       Write-Warning "PowerShell version is not compatible with SyncroModule."
+   }
+}
