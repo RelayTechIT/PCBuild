@@ -79,7 +79,8 @@ function PCBuild-SetPowerManagement {
         Disk Timeout                    30 minutes              5 minutes
         Standby Timeout                 0 minutes (never)       10 minutes
         Hibernate Timeout               0 minutes (never)       0 minutes (never)
-        Hibernation:        OFF
+        Hibernation:                    OFF
+        USB Selective Suspend:          0 (Disabled)            0 (Disabled)
         Wake Timers:                    1 (Enabled)             1 (Enabled)
         Closing the Lid (Laptops):      0 (Do Nothing)      1 (Sleep)
     #>
@@ -97,8 +98,10 @@ try {
             ("/change hibernate-timeout-ac 0"),                                                                                 # Plugged in:       Hibernate 0 minutes (Never)
             ("/change hibernate-timeout-dc 0"),                                                                                 # Battery:          Hibernate 0 minutes (Never)
             ("-h off"),                                                                                                         #                   Hibernation OFF
+            ("/SETACVALUEINDEX SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0"),    # Plugged In:       USB Selective Suspend 0 (Disabled)
+            ("/SETDCVALUEINDEX SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0"),    # Battery:          USB Selective Suspend 0 (Disabled)
             ("/SETACVALUEINDEX SCHEME_CURRENT 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 1"),    # Plugged in:       Wake Timers 1 (Enabled)
-            ("/SETDCVALUEINDEX SCHEME_CURRENT 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 1"),    # Wake Timers:      Wake Timers 1 (Enabled)
+            ("/SETDCVALUEINDEX SCHEME_CURRENT 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 1"),    # Battery:          Wake Timers 1 (Enabled)
             ("/setACvalueIndex scheme_current sub_buttons lidAction 0"),                                                        # Plugged in:       Close Lid - 0 (Do Nothing)
             ("/setDCvalueIndex scheme_current sub_buttons lidAction 1"),                                                        # Battery:          Close Lid - 1 (Sleep)
             ("/setActive scheme_current")                                                                                       # Apply settings to current power scheme
