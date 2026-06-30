@@ -155,7 +155,7 @@ function PCBuild-SetPowerManagement {
 
         # Set power management settings:
         foreach ($PowerSetting in $PowerSettings) {
-                $p = Start-Process powercfg.exe -ArgumentList "$($PowerSetting.Description)" -NoNewWindow -PassThru -Wait
+                $p = Start-Process powercfg.exe -ArgumentList "$($PowerSetting.Command)" -NoNewWindow -PassThru -Wait
                 if ($p.ExitCode -eq 0) {
                     Write-Host "Successfully set $($PowerSetting.Description)" -ForegroundColor Green
                 } else {
