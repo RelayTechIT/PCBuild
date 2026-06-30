@@ -88,40 +88,42 @@ function PCBuild-SetPowerManagement {
 # Define the settings
 try {
     if ($ConfigFile -eq "DEFAULT") {
-        $Args = @(
-            ("/change monitor-timeout-ac 30"),                                                                                  # Plugged in:       Monitor timeout 30 minutes
-            ("/change monitor-timeout-dc 3"),                                                                                   # Battery:          Monitor timeout 30 minutes
-            ("/change disk-timeout-ac 30"),                                                                                     # Plugged in:       Disk timeout 30 minutes
-            ("/change disk-timeout-dc 5"),                                                                                      # Battery:          Disk timeout 5 minutes
-            ("/change standby-timeout-ac 0"),                                                                                   # Plugged in:       Standby (Sleep) 0 minutes (Never)
-            ("/change standby-timeout-dc 5"),                                                                                   # Battery:          Standby (Sleep) 5 minutes
-            ("/change hibernate-timeout-ac 0"),                                                                                 # Plugged in:       Hibernate 0 minutes (Never)
-            ("/change hibernate-timeout-dc 0"),                                                                                 # Battery:          Hibernate 0 minutes (Never)
-            ("-h off"),                                                                                                         #                   Hibernation OFF
-            ("/SETACVALUEINDEX SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0"),    # Plugged In:       USB Selective Suspend 0 (Disabled)
-            ("/SETDCVALUEINDEX SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0"),    # Battery:          USB Selective Suspend 0 (Disabled)
-            ("/SETACVALUEINDEX SCHEME_CURRENT 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 1"),    # Plugged in:       Wake Timers 1 (Enabled)
-            ("/SETDCVALUEINDEX SCHEME_CURRENT 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 1"),    # Battery:          Wake Timers 1 (Enabled)
-            ("/setACvalueIndex scheme_current sub_buttons lidAction 0"),                                                        # Plugged in:       Close Lid - 0 (Do Nothing)
-            ("/setDCvalueIndex scheme_current sub_buttons lidAction 1"),                                                        # Battery:          Close Lid - 1 (Sleep)
-            ("/setActive scheme_current")                                                                                       # Apply settings to current power scheme
+        $PowerSettings = @(
+            [PSCustomObject]@{Description = "Plugged In:    Change Monitor timeout to 30 minutes";              Command = "/CHANGE monitor-timeout-ac 30"}
+            [PSCustomObject]@{Description = "Battery:       Change Monitor timeout to 3 minutes";               Command = "/CHANGE monitor-timeout-dc 3"}
+            [PSCustomObject]@{Description = "Plugged In:    Change Disk timeout to 30 minutes";                 Command = "/CHANGE disk-timeout-ac 30"}
+            [PSCustomObject]@{Description = "Battery:       Change Disk timeout to 5 minutes";                  Command = "/CHANGE disk-timeout-dc 5"}
+            [PSCustomObject]@{Description = "Plugged In:    Change Standby (Sleep) to 0 minutes (Never)";       Command = "/CHANGE standby-timeout-ac 0"}
+            [PSCustomObject]@{Description = "Battery:       Change Standby (Sleep) timeout to 5 minutes";       Command = "/CHANGE standby-timeout-dc 5"}
+            [PSCustomObject]@{Description = "Plugged In:    USB Selective Suspend to 0 (Disabled)";             Command = "/SETACVALUEINDEX SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0"}
+            [PSCustomObject]@{Description = "Battery:       USB Selective Suspend to 0 (Disabled)";             Command = "/SETDCVALUEINDEX SCHEME_CURRENT 2a737441-1930-4402-8d77-b2bebba308a3 48e6b7a6-50f5-4782-a5d4-53bb8f07e226 0"}
+            [PSCustomObject]@{Description = "Plugged In:    Set Wake Timers to 1 (Enabled)";                    Command = "/SETACVALUEINDEX SCHEME_CURRENT 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 1"}
+            [PSCustomObject]@{Description = "Battery:       Set Wake Timers to 1 (Enabled)";                    Command = "/SETDCVALUEINDEX SCHEME_CURRENT 238c9fa8-0aad-41ed-83f4-97be242c8f20 bd3b718a-0680-4d9d-8ab2-e1d2b4ac806d 1"}
+            [PSCustomObject]@{Description = "Plugged In:    Set Close Lid Action to 0 (Do Nothing)";            Command = "/SETACVALUEINDEX SCHEME_CURRENT SUB_BUTTONS lidAction 0"}
+            [PSCustomObject]@{Description = "Plugged In:    Set Close Lid Action to 1 (Sleep)";                 Command = "/SETDCVALUEINDEX SCHEME_CURRENT SUB_BUTTONS lidAction 1"}
+            [PSCustomObject]@{Description = "Plugged In:    Change Hibernate Timeout to 0 minutes (Never)";     Command = "/CHANGE hibernate-timeout-ac 0"}
+            [PSCustomObject]@{Description = "Battery:       Change Hibernate Timeout to 0 minutes (Never)";     Command = "/CHANGE hibernate-timeout-dc 0"}
+            [PSCustomObject]@{Description = "Global:        Turn off Hibernation";                              Command = "-h off"}
+            [PSCustomObject]@{Description = "Global: Apply New Power Management Settings";                      Command = "/SETACTIVE SCHEME_CURRENT"}
         )
     } else {
         Throw "You must provide a configuration file to continue. This has not been scripted yet."
     }
 
     # Set power management settings:
-    $Args | foreach {
-          $p = Start-Process powercfg -WorkingDirectory "C:\Windows\System32" -windowstyle Hidden -ArgumentList $_ -PassThru -Wait
-          If ($p.ExitCode -eq 0) {
-            Write-Host "Successfully ran Powercfg" $_
-          } else {
-            Throw $p.ExitCode
-          }
+    foreach ($PowerSetting in $PowerSettings) {
+        try {
+            $p = Start-Process powercfg.exe -ArgumentList "/changg err" -NoNewWindow -PassThru -Wait
+            if ($p.ExitCode -eq 0) {
+                Write-Host "Successfully set $($PowerSettings[0].Description)" -ForegroundColor Green
+            } else {
+                Throw "powercfg failed with exit code: $($p.ExitCode)"
+            }
+        }
+        catch {
+            Write-Host "An error has occurred: $($_)" -ForegroundColor Red
+        }
     }
-} catch {
-  Write-Host "An error occurred:" $_ -ForegroundColor Red
-}
 }
 
 
