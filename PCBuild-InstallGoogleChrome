@@ -1,0 +1,6 @@
+$ProgressPreference = 'SilentlyContinue'; 
+
+$dir = "C:\RTSupport\Software\Chrome";
+New-Item $dir -ItemType Directory -Force; 
+Invoke-RestMethod -Uri "http://dl.google.com/chrome/install/latest/chrome_installer.exe" -OutFile "$($dir)\chrome_installer.exe";
+Start-Process "$($dir)\chrome_installer.exe" -ArgumentList "/silent /install" -NoNewWindow -Wait;
