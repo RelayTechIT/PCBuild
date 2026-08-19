@@ -1,0 +1,6 @@
+$ProgressPreference = 'SilentlyContinue'; 
+
+$dir = "C:\RTSupport\Software\GoogleDrive";
+New-Item $dir -ItemType Directory -Force; 
+Invoke-RestMethod -Uri "https://dl.google.com/drive-file-stream/GoogleDriveSetup.exe" -OutFile "$($dir)\GoogleDriveSetup.exe";
+Start-Process "$($dir)\GoogleDriveSetup.exe" -ArgumentList "/silent /install" -NoNewWindow -Wait;
