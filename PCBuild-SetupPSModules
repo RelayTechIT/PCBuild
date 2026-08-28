@@ -1,10 +1,8 @@
-
-$m="PCBuild-Module"; 
-$u="https://raw.githubusercontent.com/RelayTechIT/PCDiag/refs/heads/main/$($m)"; 
-$d="$($env:ProgramFiles)\WindowsPowerShell\Modules\$($m)"; 
-if (!(Test-Path $d)) {new-item $d -ItemType Directory -Force > $null}; 
-Invoke-RestMethod -Uri $u -OutFile "$($d)\$($m).psm1"; 
-Import-Module -Name $m -Force -Verbose
+$ModuleName = "PCBuild-Module"
+$ModuleDir = "$($env:ProgramFiles)\WindowsPowerShell\Modules\$($ModuleName)"
+if (!(Test-Path $ModuleDir)) {new-item $$ModuleDir -ItemType Directory -Force > $null};
+irm https://raw.githubusercontent.com/RelayTechIT/PCBuild/refs/heads/main/PCBuild-Module -OutFile "$($ModuleDir)\$($ModuleName).psm1"
+Import-Module -Name $ModuleName -Force -Verbose
 
 PCBuild-CheckForModuleOrPackage -PackageOrModuleName "NuGet" -PackageOrModuleType PackageProvider
 PCBuild-CheckForModuleOrPackage -PackageOrModuleName "Microsoft.WinGet.Client" -PackageOrModuleType Module
