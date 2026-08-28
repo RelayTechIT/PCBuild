@@ -1,0 +1,20 @@
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+
+$xml = [Windows.Data.Xml.Dom.XmlDocument]::new()
+$xml.LoadXml(@"
+<toast duration="long">
+    <visual>
+        <binding template="ToastText04">
+            <text id="1">Syncro Helper Notification</text>
+            <text id="2">Computer Name: $env:COMPUTERNAME</text>
+        </binding>
+    </visual>
+</toast>
+"@)
+
+[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier(
+    "Relay Tech IT"
+).Show(
+    [Windows.UI.Notifications.ToastNotification]::new($xml)
+)
