@@ -1,1 +1,11 @@
 
+$m="PCBuild-Module"; 
+$u="https://raw.githubusercontent.com/RelayTechIT/PCDiag/refs/heads/main/$($m)"; 
+$d="$($env:ProgramFiles)\WindowsPowerShell\Modules\$($m)"; 
+if (!(Test-Path $d)) {new-item $d -ItemType Directory -Force > $null}; 
+Invoke-RestMethod -Uri $u -OutFile "$($d)\$($m).psm1"; 
+Import-Module -Name $m -Force -Verbose
+
+PCBuild-CheckForModuleOrPackage -PackageOrModuleName "NuGet" -PackageOrModuleType PackageProvider
+PCBuild-CheckForModuleOrPackage -PackageOrModuleName "Microsoft.WinGet.Client" -PackageOrModuleType Module
+PCBuild-CheckForModuleOrPackage -PackageOrModuleName "PSWindowsUpdate" -PackageOrModuleType Module
