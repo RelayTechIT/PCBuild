@@ -1,6 +1,5 @@
 [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
 [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
-$cv = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'; 
 
 $xml = [Windows.Data.Xml.Dom.XmlDocument]::new()
 $xml.LoadXml(@"
@@ -9,7 +8,6 @@ $xml.LoadXml(@"
         <binding template="ToastText04">
             <text id="1">Syncro Helper Notification</text>
             <text id="2">PC Name: $env:COMPUTERNAME</text>
-			 <text id="2"> $($cv.ProductName) $($cv.DisplayVersion) ($($cv.CurrentBuild))</text>
         </binding>
     </visual>
 </toast>
