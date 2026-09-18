@@ -1,7 +1,8 @@
 $ErrorActionPreference  =   'Stop'
 $ProgressPreference     =   'Silentlycontinue'
 $ABBSvr                 =   "rtnas-ds1621p.synology.me"
-$ABBVer                 =   "3.0.0-4638"
+# $ABBVer                 =   "3.0.0-4638"
+$ABBVer                 =   "3.2.1-5059"
 $ABBOS                  =   "Windows"
 
 $LclPath = "C:\RTSupport\Software\SynologyActiveBackup"
@@ -83,7 +84,8 @@ if (!($Installed)) {
 
     # Create local Directory and download installer file
         If (!(test-path $LclPath)) {new-item $LclPath -itemtype Directory -force}
-            Iwr -uri $Uri -outfile "$($LclPath)\$($File)"
+#            Iwr -uri $Uri -outfile "$($LclPath)\$($File)"
+        Invoke-RestMethod -uri $Uri -outfile "$($LclPath)\$($File)"
             Write-Host "Downloaded $($File) to $($LclPath)"
                 $msi = gci -Path $LclPath $File
 
