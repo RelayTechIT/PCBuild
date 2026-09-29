@@ -1,58 +1,56 @@
 $ErrorActionPreference  =   'Stop'
 $ProgressPreference     =   'Silentlycontinue'
-$ABBSvr                 =   "rtnas-ds1621p.synology.me"
+
 # $ABBVer                 =   "3.0.0-4638"
 $ABBVer                 =   "3.2.1-5059"
-$ABBOS                  =   "Windows"
 
-$LclPath = "C:\RTSupport\Software\SynologyActiveBackup"
-# $File = "Synology Active Backup for Business Agent-3.0.0-4638-x64.msi"
-$File = "Synology Active Backup for Business Agent-$($ABBVer)-x64.msi"
+
 $UriBase = "https://global.synologydownload.com/download/Utility/ActiveBackupBusinessAgent"
-# $Uri = "$($UriBase)/3.0.0-4638/Windows/x86_64/Synology%20Active%20Backup%20for%20Business%20Agent-3.0.0-4638-x64.msi"
-$Uri = "$($UriBase)/$($ABBVer)/$($ABBOS)/x86_64/$($File.Replace(' ','%20'))"
-
-
-
+$LclPath = "C:\RTSupport\Software\SynologyActiveBackup"
 
 Try {
+    if (!$ABBUsr) {Throw "Required variable missing."}
+    if (!$ABBPwd) {Throw "Required variable missing."}
+    if (!$ABBSvr) {Throw "Required variable missing."}
+    if (!$ABBver) {$ABBVer = "3.2.1-5059"}
+    if (!$ABBOS)  {$ABBOS = "Windows"}
 
-$Pkg = "Synology Active Backup for Business"
-$WmiPkg = Get-WmiObject -Class Win32_Product | Select * | where Name -Like "*$Pkg*"
+    $File = "Synology Active Backup for Business Agent-$($ABBVer)-x64.msi"
+    $Uri = "$($UriBase)/$($ABBVer)/$($ABBOS)/x86_64/$($File.Replace(' ','%20'))"
 
-if ($WmiPkg) {
-    Write-Host "$($Pkg) is installed on this system."
-    $Installed = $true
-}
+    $Pkg = "Synology Active Backup for Business"
+    $WmiPkg = Get-WmiObject -Class Win32_Product | Select * | where Name -Like "*$Pkg*"
 
-$GetSvc = get-service "*$($Pkg)*"
-if ($GetSvc.Status -eq "Running") {
-    Write-Host "$($Pkg) service is running."
-    $Running = $true
-}
+    if ($WmiPkg) {
+        Write-Host "$($Pkg) is installed on this system."
+        $Installed = $true
+    }
 
-$NetTCP = Get-NetTCPConnection -RemotePort 5510 -ErrorAction SilentlyContinue
-if ($NetTCP.count -gt 0) {
-    Write-Host "$($NetTCP.count) TCP connections open to remote host $($NetTCP.RemoteAddress | select -First 1) on port $($NetTCP.RemotePort | select -First 1)"
-    $Connected = $true
-} else {
-    Write-Host "No TCP Connections open on port 5510"
-    $NotConnected = $true
-}
+    $GetSvc = get-service "*$($Pkg)*"
+    if ($GetSvc.Status -eq "Running") {
+        Write-Host "$($Pkg) service is running."
+        $Running = $true
+    }
 
-if (($Installed) -and ($NotConnected)) {
-    Write-Host "$($Pkg) is installed but not connected. Attempting re-installation now."
-}
-if (($Installed) -and ($Connected)) {
-    Throw "$($Pkg) is installed and connected. No action needed."
-}
-if (!($Installed)) {
-    Write-Host "$($Pkg) is not installed. Attempting installation now."
-}
+    $NetTCP = Get-NetTCPConnection -RemotePort 5510 -ErrorAction SilentlyContinue
+    if ($NetTCP.count -gt 0) {
+        Write-Host "$($NetTCP.count) TCP connections open to remote host $($NetTCP.RemoteAddress | select -First 1) on port $($NetTCP.RemotePort | select -First 1)"
+        $Connected = $true
+    } else {
+        Write-Host "No TCP Connections open on port 5510"
+        $NotConnected = $true
+    }
 
+    if (($Installed) -and ($NotConnected)) {
+        Write-Host "$($Pkg) is installed but not connected. Attempting re-installation now."
+    }
+    if (($Installed) -and ($Connected)) {
+        Throw "$($Pkg) is installed and connected. No action needed."
+    }
+    if (!($Installed)) {
+        Write-Host "$($Pkg) is not installed. Attempting installation now."
+    }
 
-  if (!$ABBUsr) {Throw "Required variable missing."}
-  if (!$ABBPwd) {Throw "Required variable missing."}
     # Remove any old installs of software
         $PKGWMI = "Synology"
         $WMIObject=Get-WmiObject -Class Win32_Product | Select * | where Name -Like "*$PKGWMI*"
@@ -84,14 +82,11 @@ if (!($Installed)) {
 
     # Create local Directory and download installer file
         If (!(test-path $LclPath)) {new-item $LclPath -itemtype Directory -force}
-#            Iwr -uri $Uri -outfile "$($LclPath)\$($File)"
         Invoke-RestMethod -uri $Uri -outfile "$($LclPath)\$($File)"
             Write-Host "Downloaded $($File) to $($LclPath)"
                 $msi = gci -Path $LclPath $File
 
     # Silently Install the program
-    # This works
-        # Start-Process msiexec -wait -ArgumentList "/i `"$($msi.FullName)`" /qn ADDRESS=`"$($ABBSvr)`" USERNAME=`"$($ABBUsr)`" PASSWORD=`"$($ABBPwd)`" NO_SHORTCUT=1 ALLOW_UNTRUST=1 /Log `"$($LclPath)\ABB_Install.log`""
         Write-Host "Installing: $($msi.FullName)"
         Start-Process msiexec -wait -ArgumentList "/i `"$($msi.FullName)`" /qn ADDRESS=`"$($ABBSvr)`" USERNAME=`"$($ABBUsr)`" PASSWORD=`"$($ABBPwd)`" NO_SHORTCUT=1 ALLOW_UNTRUST=1"
         Write-Host "Successfully Installed: $($msi.FullName)"
