@@ -18,7 +18,6 @@ $AppxPkgs = @(
     "Microsoft.XboxGameOverlay",
     "Microsoft.XboxGamingOverlay",
     "Microsoft.OutlookForWindows",
-    "Microsoft.XboxGameCallableUI",
     "Microsoft.PowerAutomateDesktop",
     "Microsoft.XboxIdentityProvider",
     "Microsoft.XboxSpeechToTextOverlay"
