@@ -1,0 +1,41 @@
+$AppxPkgs = @(
+    "aimgr",
+    "DropboxOEM",
+    "Microsoft.Todos",
+    "Microsoft.XboxApp",
+    "Microsoft.Copilot",
+    "Microsoft.BingNews",
+    "Microsoft.SkypeApp",
+    "Microsoft.YourPhone",
+    "Microsoft.ZuneMusic",
+    "Microsoft.ZuneVideo",
+    "Microsoft.GamingApp",
+    "C27EB4BA.DropboxOEM",
+    "Clipchamp.Clipchamp",
+    "Microsoft.Xbox.TCUI",
+    "Microsoft.BingSearch",
+    "Microsoft.BingWeather",
+    "Microsoft.XboxGameOverlay",
+    "Microsoft.XboxGamingOverlay",
+    "Microsoft.OutlookForWindows",
+    "Microsoft.XboxGameCallableUI",
+    "Microsoft.PowerAutomateDesktop",
+    "Microsoft.XboxIdentityProvider",
+    "Microsoft.XboxSpeechToTextOverlay"
+)
+
+foreach ($Pkg in $AppxPkgs) {
+
+    Write-Host "Removing: $Pkg" -ForegroundColor Yellow
+
+    # Remove for existing users
+    Get-AppxPackage -AllUsers *$Pkg* -ErrorAction SilentlyContinue |
+        Remove-AppxPackage -AllUsers -ErrorAction SilentlyContinue
+
+    # Remove provisioned package so it doesn't return for new users
+    Get-AppxProvisionedPackage -Online |
+        Where-Object { $_.DisplayName -like "*$Pkg*" } |
+        Remove-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue
+}
+
+Write-Host "App removal complete." -ForegroundColor Green
