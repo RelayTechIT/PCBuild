@@ -1,3 +1,5 @@
+function Remove-Bloatware {
+
 $AppxPkgs = @(
     "aimgr",
     "DropboxOEM",
@@ -15,7 +17,6 @@ $AppxPkgs = @(
     "Microsoft.Xbox.TCUI",
     "Microsoft.BingSearch",
     "Microsoft.BingWeather",
-    "Microsoft.XboxGameOverlay",
     "Microsoft.XboxGamingOverlay",
     "Microsoft.OutlookForWindows",
     "Microsoft.PowerAutomateDesktop",
@@ -38,3 +39,4 @@ foreach ($Pkg in $AppxPkgs) {
 }
 
 Write-Host "App removal complete." -ForegroundColor Green
+}
