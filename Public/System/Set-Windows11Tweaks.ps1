@@ -1,6 +1,10 @@
 function Set-Windows11Tweaks {
 
+    $Failed = @()
+
+    Write-Host ""
     Write-Host "Applying Windows 11 Registry Tweaks..." -ForegroundColor Yellow
+    Write-Host ""
 
     $RegistrySettings = @(
 
@@ -55,15 +59,55 @@ function Set-Windows11Tweaks {
 
     foreach ($Setting in $RegistrySettings) {
 
-        Write-Host "Applying: $($Setting.Description)" -ForegroundColor Cyan
+        try {
 
-        PCBuild-UpdateRegistry `
-            -RegPath $Setting.RegPath `
-            -RegName $Setting.RegName `
-            -RegValue $Setting.RegValue `
-            -RegType $Setting.RegType
+            Write-Host "[RUNNING] $($Setting.Description)" -ForegroundColor Yellow
+
+            PCBuild-UpdateRegistry `
+                -RegPath $Setting.RegPath `
+                -RegName $Setting.RegName `
+                -RegValue $Setting.RegValue `
+                -RegType $Setting.RegType `
+                -ErrorAction Stop
+
+            Write-Host "[PASS] $($Setting.Description)" -ForegroundColor Green
+        }
+        catch {
+
+            Write-Host "[FAIL] $($Setting.Description)" -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor DarkRed
+
+            $Failed += [PSCustomObject]@{
+                Description = $Setting.Description
+                RegPath = $Setting.RegPath
+                RegName = $Setting.RegName
+                Error = $_.Exception.Message
+            }
+        }
     }
 
     Write-Host ""
-    Write-Host "Windows 11 Registry Tweaks Complete." -ForegroundColor Green
+
+    if ($Failed.Count -gt 0) {
+
+        Write-Host "==================================================" -ForegroundColor Red
+        Write-Host " WINDOWS 11 TWEAKS COMPLETED WITH FAILURES " -ForegroundColor Red
+        Write-Host "==================================================" -ForegroundColor Red
+        Write-Host ""
+
+        $Failed | Format-Table Description, RegName, Error -AutoSize
+
+        throw "$($Failed.Count) registry tweak(s) failed."
+    }
+
+    Write-Host "==================================================" -ForegroundColor Green
+    Write-Host " WINDOWS 11 TWEAKS COMPLETED SUCCESSFULLY " -ForegroundColor Green
+    Write-Host "==================================================" -ForegroundColor Green
+
+    return [PSCustomObject]@{
+        Success = $true
+        Applied = $RegistrySettings.Count
+        Failed = 0
+        Timestamp = Get-Date
+    }
 }
