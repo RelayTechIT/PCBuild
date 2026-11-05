@@ -229,11 +229,11 @@ function Show-PCBuildMenu {
 
 # Module Exports
 if ($MyInvocation.MyCommand.Module) {
-    Export-ModuleMember -Function @(
-        'Get-GitHubItems',
-        'Invoke-GitHubScript',
- lize-PCBuild',
-        'Get-PCBuildConfig',
-        'Show-PCBuildMenu'
-    )
+Export-ModuleMember -Function @(
+    'Get-GitHubItems',
+    'Invoke-GitHubScript',
+    'Initialize-PCBuild',
+    'Get-PCBuildConfig',
+    'Show-PCBuildMenu'
+)
 }
