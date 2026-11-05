@@ -34,20 +34,6 @@ function Get-GitHubItems {
         }
     }
 
-    foreach ($Function in Get-Command -CommandType Function) {
-
-        if ($Function.Name -notlike 'Install-*') { continue }
-
-        $Items += [PSCustomObject]@{
-            Category = 'Security'
-            Name = $Function.Name
-            Type = 'BuiltIn'
-        }
-    }
-
-    return $Items
-}
-
 function Invoke-GitHubScript {
 
     param(
@@ -75,18 +61,14 @@ function Invoke-GitHubScript {
 }
 
 function Invoke-PCBuildItem {
-
     param(
         [Parameter(Mandatory)]
         $Item
     )
-
     if ($Item.Type -eq 'BuiltIn') {
-
         & $Item.Name
     }
     else {
-
         Invoke-GitHubScript `
             -Url $Item.Url `
             -FunctionName $Item.Name
@@ -94,18 +76,14 @@ function Invoke-PCBuildItem {
 }
 
 function Show-PCBuildMenu {
-
     do {
 
         Clear-Host
-
         Write-Host "==================================================" -ForegroundColor DarkGreen
         Write-Host "                  PC BUILD MENU" -ForegroundColor Green
         Write-Host "==================================================" -ForegroundColor DarkGreen
         Write-Host ""
-
         $Items = Get-GitHubItems
-
         $Lookup = @{}
         $Index = 1
 
