@@ -39,7 +39,7 @@ function Get-GitHubItems {
 
         Write-PCBuildLog "Downloading manifest."
         Write-PCBuildLog "Manifest URI: $script:ManifestUri"
-        Write-PCBuildLog "ClientId URI: $script:ClientId"
+   
 
         $script:CachedItems = Invoke-RestMethod `
             -Uri $script:ManifestUri `
@@ -98,7 +98,7 @@ function Invoke-GitHubScript {
 
 # Menu Display
 function Show-PCBuildMenu {
-
+ Write-PCBuildLog "Client Id: $script:ClientId"
     do {
 
         Clear-Host
@@ -215,7 +215,7 @@ if ($MyInvocation.MyCommand.Module) {
   Export-ModuleMember -Function `
     Get-GitHubItems,
     Invoke-GitHubScript,
-    Show-PCBuildMenu,
     Set-PCBuildConfig,
-    Get-PCBuildConfig
+    Get-PCBuildConfig,
+    Show-PCBuildMenu,
 }
