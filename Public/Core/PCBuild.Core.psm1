@@ -1,24 +1,57 @@
-# Module Configuration
+# Configuration
 $script:ManifestUri = 'https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/manifest.json'
+$script:EnableLogging = $true
+$script:LogFile = Join-Path $env:TEMP 'PCBuild.log'
+
 $script:FunctionStatus = @{}
 $script:CachedItems = $null
+
+# Logging
+function Write-PCBuildLog {
+    param(
+        [string]$Message,
+        [ValidateSet('INFO','WARN','ERROR')]
+        [string]$Level = 'INFO'
+    )
+
+    if (-not $script:EnableLogging) { return }
+
+    $Entry = "[{0}] [{1}] {2}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Level, $Message
+
+    Write-Host $Entry -ForegroundColor @{
+        INFO  = 'DarkGray'
+        WARN  = 'Yellow'
+        ERROR = 'Red'
+    }[$Level]
+
+    Add-Content -Path $script:LogFile -Value $Entry -ErrorAction SilentlyContinue
+}
 
 # Menu Item Discovery
 function Get-GitHubItems {
 
     if ($script:CachedItems) {
+        Write-PCBuildLog "Using cached manifest."
         return $script:CachedItems
     }
 
     try {
 
+        Write-PCBuildLog "Downloading manifest."
+        Write-PCBuildLog "Manifest URI: $script:ManifestUri"
+
         $script:CachedItems = Invoke-RestMethod `
             -Uri $script:ManifestUri `
             -ErrorAction Stop
 
+        Write-PCBuildLog "Loaded $($script:CachedItems.Count) menu items."
+
         return $script:CachedItems
     }
     catch {
+
+        Write-PCBuildLog $_.Exception.Message 'ERROR'
+
         throw "Failed to load manifest.json. $($_.Exception.Message)"
     }
 }
@@ -30,22 +63,36 @@ function Invoke-GitHubScript {
         [Parameter(Mandatory)][string]$FunctionName
     )
 
-    Write-Host "Downloading $FunctionName..." -ForegroundColor Cyan
+    try {
 
-    $Code = (Invoke-WebRequest `
-        -Uri $Url `
-        -UseBasicParsing `
-        -ErrorAction Stop).Content
+        Write-PCBuildLog "Downloading script: $FunctionName"
+        Write-PCBuildLog "URL: $Url"
 
-    . ([ScriptBlock]::Create($Code))
+        $Code = (Invoke-WebRequest `
+            -Uri $Url `
+            -UseBasicParsing `
+            -ErrorAction Stop).Content
 
-    if (-not (Get-Command $FunctionName -ErrorAction SilentlyContinue)) {
-        throw "Function '$FunctionName' was not loaded."
+        Write-PCBuildLog "Downloaded $($Code.Length) characters."
+
+        . ([ScriptBlock]::Create($Code))
+
+        if (-not (Get-Command $FunctionName -ErrorAction SilentlyContinue)) {
+            throw "Function '$FunctionName' was not loaded."
+        }
+
+        Write-PCBuildLog "Executing function: $FunctionName"
+
+        & $FunctionName
+
+        Write-PCBuildLog "Execution completed: $FunctionName"
     }
+    catch {
 
-    Write-Host "Executing $FunctionName..." -ForegroundColor Yellow
+        Write-PCBuildLog $_.Exception.Message 'ERROR'
 
-    & $FunctionName
+        throw
+    }
 }
 
 # Menu Display
@@ -60,7 +107,14 @@ function Show-PCBuildMenu {
         Write-Host ('=' * 50) -ForegroundColor DarkGreen
         Write-Host ''
 
-        $Items = Get-GitHubItems
+        try {
+            $Items = Get-GitHubItems
+        }
+        catch {
+            Write-Host $_.Exception.Message -ForegroundColor Red
+            return
+        }
+
         $Lookup = @{}
         $Index = 1
 
@@ -80,7 +134,7 @@ function Show-PCBuildMenu {
                 $Color = switch ($script:FunctionStatus[$Item.Name]) {
                     'Success' { 'Green' }
                     'Failed' { 'Red' }
-                    default { 'White' }
+                    default   { 'White' }
                 }
 
                 Write-Host " [$Index] " -ForegroundColor Yellow -NoNewline
@@ -122,12 +176,17 @@ function Show-PCBuildMenu {
 
             $script:FunctionStatus[$Item.Name] = 'Success'
 
+            Write-PCBuildLog "Success: $($Item.Name)"
+
             Write-Host ''
             Write-Host "[SUCCESS] $($Item.Name)" -ForegroundColor Green
         }
         catch {
 
             $script:FunctionStatus[$Item.Name] = 'Failed'
+
+            Write-PCBuildLog "Failure: $($Item.Name)" 'ERROR'
+            Write-PCBuildLog $_.Exception.ToString() 'ERROR'
 
             Write-Host ''
             Write-Host "[FAILED] $($Item.Name)" -ForegroundColor Red
