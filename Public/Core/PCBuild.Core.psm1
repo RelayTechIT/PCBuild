@@ -34,7 +34,14 @@ function Get-GitHubItems {
 
             Write-Host "Loading $Category..." -ForegroundColor DarkGray
 
-            $Files = Invoke-RestMethod -Uri $Url -ErrorAction Stop
+            $Headers = @{
+              'User-Agent' = 'PCBuild'
+                 }
+
+     $Files = Invoke-RestMethod `
+    -Uri $Url `
+    -Headers $Headers `
+    -ErrorAction Stop
 
             foreach ($File in $Files) {
 
