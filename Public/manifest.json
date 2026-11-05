@@ -1,0 +1,72 @@
+[
+  {
+    "Category": "Software",
+    "Name": "Install-Bluebeam",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/Software/Install-Bluebeam.ps1"
+  },
+  {
+    "Category": "Software",
+    "Name": "Install-Chrome",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/Software/Install-Chrome.ps1"
+  },
+  {
+    "Category": "Software",
+    "Name": "Install-GoogleDrive",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/Software/Install-GoogleDrive.ps1"
+  },
+  {
+    "Category": "Software",
+    "Name": "Install-GoogleWorkspaceSync",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/Software/Install-GoogleWorkspaceSync.ps1"
+  },
+  {
+    "Category": "Software",
+    "Name": "Install-NitroPro",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/Software/Install-NitroPro.ps1"
+  },
+  {
+    "Category": "Software",
+    "Name": "Install-Office",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/Software/Install-Office.ps1"
+  },
+  {
+    "Category": "Software",
+    "Name": "Install-PrismaBrowser",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/Software/Install-PrismaBrowser.ps1"
+  },
+  {
+    "Category": "Cleanup",
+    "Name": "Remove-Bloatware",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/Cleanup/Remove-Bloatware.ps1"
+  },
+  {
+    "Category": "Cleanup",
+    "Name": "Remove-OneDrive",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/Cleanup/Remove-OneDrive.ps1"
+  },
+  {
+    "Category": "System",
+    "Name": "Disable-IPv6",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/System/Disable-IPv6.ps1"
+  },
+  {
+    "Category": "System",
+    "Name": "Disable-WindowsFeatures",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/System/Disable-WindowsFeatures.ps1"
+  },
+  {
+    "Category": "System",
+    "Name": "Set-PowerManagement",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/System/Set-PowerManagement.ps1"
+  },
+  {
+    "Category": "System",
+    "Name": "Set-Windows11Tweaks",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/System/Set-Windows11Tweaks.ps1"
+  },
+  {
+    "Category": "System",
+    "Name": "Set-WindowsTime",
+    "Url": "https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/System/Set-WindowsTime.ps1"
+  }
+]
