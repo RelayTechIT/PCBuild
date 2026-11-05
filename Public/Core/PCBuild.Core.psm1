@@ -131,6 +131,7 @@ function Show-PCBuildMenu {
         $config = Get-PCBuildConfig
 
         if ($config?.ClientId) {
+            Write-PCBuildLog "Oh Dear"
             Write-PCBuildLog "Client Id: $($config.ClientId)"
         }
 
