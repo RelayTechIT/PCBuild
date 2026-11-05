@@ -55,6 +55,7 @@ function Get-GitHubItems {
 
         Write-PCBuildLog 'Downloading manifest.'
         Write-PCBuildLog "Manifest URI: $script:ManifestUri"
+        Write-PCBuildLog "TenantId: $($script.TenantId)"
 
         $script:CachedItems = Invoke-RestMethod -Uri $script:ManifestUri -ErrorAction Stop
 
