@@ -198,10 +198,6 @@ function Show-PCBuildMenu {
     } while ($true)
 }
 
-# Module Exports
-if ($MyInvocation.MyCommand.Module) {
-  $script:Config = $null
-
 function Set-PCBuildConfig {
     param([object]$Config)
     $script:Config = $Config
@@ -211,7 +207,10 @@ function Get-PCBuildConfig {
     $script:Config
 }
 
-Export-ModuleMember -Function `
+# Module Exports
+if ($MyInvocation.MyCommand.Module) {
+  $script:Config = $null
+  Export-ModuleMember -Function `
     Get-GitHubItems,
     Invoke-GitHubScript,
     Show-PCBuildMenu,
