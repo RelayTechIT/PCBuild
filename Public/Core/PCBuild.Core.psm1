@@ -217,5 +217,5 @@ if ($MyInvocation.MyCommand.Module) {
     Invoke-GitHubScript,
     Set-PCBuildConfig,
     Get-PCBuildConfig,
-    Show-PCBuildMenu,
+    Show-PCBuildMenu
 }
