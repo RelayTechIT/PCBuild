@@ -98,11 +98,11 @@ function Invoke-GitHubScript {
 
 # Menu Display
 function Show-PCBuildMenu {
- Write-PCBuildLog "Client Id: $script:ClientId"
+
     do {
 
         Clear-Host
-
+        Write-PCBuildLog "Client Id: $script:ClientId"
         Write-Host ('=' * 50) -ForegroundColor DarkGreen
         Write-Host 'PC BUILD MENU' -ForegroundColor Green
         Write-Host ('=' * 50) -ForegroundColor DarkGreen
