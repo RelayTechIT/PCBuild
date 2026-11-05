@@ -1,60 +1,29 @@
-# Repository Configuration
-$script:RepoOwner = 'RelayTechIT'
-$script:RepoName = 'PCBuild'
-$script:Categories = @('Software', 'System', 'Cleanup', 'Security')
+# Module Configuration
+$script:ManifestUri = 'https://raw.githubusercontent.com/RelayTechIT/PCBuild/main/Public/manifest.json'
 $script:FunctionStatus = @{}
 $script:CachedItems = $null
 
-$script:GitHubHeaders = @{
-    'User-Agent' = 'PCBuild'
-    'Accept' = 'application/vnd.github+json'
-}
-
-# GitHub Request Helper
-function Invoke-PCBuildGitHubRequest {
-    param(
-        [Parameter(Mandatory)]
-        [string]$Uri
-    )
-
-    Invoke-RestMethod -Uri $Uri -Headers $script:GitHubHeaders -ErrorAction Stop
-}
-
-# GitHub Item Discovery
+# Menu Item Discovery
 function Get-GitHubItems {
 
-    if ($script:CachedItems) { return $script:CachedItems }
-
-    $Items = foreach ($Category in $script:Categories) {
-
-        try {
-
-            $Files = Invoke-PCBuildGitHubRequest `
-                -Uri "https://api.github.com/repos/$script:RepoOwner/$script:RepoName/contents/Public/$Category"
-
-            foreach ($File in $Files) {
-
-                if ($File.name -notlike '*.ps1') { continue }
-
-                [PSCustomObject]@{
-                    Category = $Category
-                    Name = [IO.Path]::GetFileNameWithoutExtension($File.name)
-                    Url = $File.download_url
-                }
-            }
-        }
-        catch {
-            Write-Host "[FAILED] $Category" -ForegroundColor Red
-            Write-Host $_.Exception.Message -ForegroundColor Yellow
-        }
+    if ($script:CachedItems) {
+        return $script:CachedItems
     }
 
-    $script:CachedItems = $Items
+    try {
 
-    return $Items
+        $script:CachedItems = Invoke-RestMethod `
+            -Uri $script:ManifestUri `
+            -ErrorAction Stop
+
+        return $script:CachedItems
+    }
+    catch {
+        throw "Failed to load manifest.json. $($_.Exception.Message)"
+    }
 }
 
-# GitHub Script Execution
+# Script Execution
 function Invoke-GitHubScript {
     param(
         [Parameter(Mandatory)][string]$Url,
@@ -63,9 +32,12 @@ function Invoke-GitHubScript {
 
     Write-Host "Downloading $FunctionName..." -ForegroundColor Cyan
 
-    $Code = Invoke-PCBuildGitHubRequest -Uri $Url
+    $Code = (Invoke-WebRequest `
+        -Uri $Url `
+        -UseBasicParsing `
+        -ErrorAction Stop).Content
 
-    Invoke-Expression $Code
+    . ([ScriptBlock]::Create($Code))
 
     if (-not (Get-Command $FunctionName -ErrorAction SilentlyContinue)) {
         throw "Function '$FunctionName' was not loaded."
@@ -92,9 +64,11 @@ function Show-PCBuildMenu {
         $Lookup = @{}
         $Index = 1
 
-        foreach ($Category in $script:Categories) {
+        foreach ($Category in ($Items.Category | Sort-Object -Unique)) {
 
-            $CategoryItems = $Items | Where-Object Category -eq $Category | Sort-Object Name
+            $CategoryItems = $Items |
+                Where-Object Category -eq $Category |
+                Sort-Object Name
 
             if (-not $CategoryItems) { continue }
 
@@ -127,9 +101,11 @@ function Show-PCBuildMenu {
         if ($Choice -eq '0') { break }
         if ($Choice -notmatch '^\d+$') { continue }
 
-        $Item = $Lookup[[int]$Choice]
+        $Choice = [int]$Choice
 
-        if (-not $Item) { continue }
+        if (-not $Lookup.ContainsKey($Choice)) { continue }
+
+        $Item = $Lookup[$Choice]
 
         Clear-Host
 
@@ -140,7 +116,9 @@ function Show-PCBuildMenu {
 
         try {
 
-            Invoke-GitHubScript -Url $Item.Url -FunctionName $Item.Name
+            Invoke-GitHubScript `
+                -Url $Item.Url `
+                -FunctionName $Item.Name
 
             $script:FunctionStatus[$Item.Name] = 'Success'
 
@@ -162,4 +140,6 @@ function Show-PCBuildMenu {
 }
 
 # Module Exports
-Export-ModuleMember -Function Get-GitHubItems, Invoke-GitHubScript, Show-PCBuildMenu
+if ($MyInvocation.MyCommand.Module) {
+    Export-ModuleMember -Function Get-GitHubItems, Invoke-GitHubScript, Show-PCBuildMenu
+}
