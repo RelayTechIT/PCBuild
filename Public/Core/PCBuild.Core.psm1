@@ -33,8 +33,15 @@ function Get-GitHubItems {
             Write-Host $_.Exception.Message -ForegroundColor Yellow
         }
     }
+    
+
+    }
+
+    return $Items
+}
 
 function Invoke-GitHubScript {
+
 
     param(
         [Parameter(Mandatory)]
