@@ -1,47 +1,75 @@
-$script:RepoOwner = "RelayTechIT"
-$script:RepoName = "PCBuild"
+# Repository Info
+$script:RepoOwner = 'RelayTechIT'
+$script:RepoName = 'PCBuild'
+
+# Execution status tracking
 $script:FunctionStatus = @{}
 
+# Cache downloaded menu items for the session
+$script:CachedItems = $null
+
+# ==================================================
+# Get-GitHubItems
+# Retrieves all available scripts from GitHub and builds the menu inventory.
+# ==================================================
 function Get-GitHubItems {
+
+    # Return cached copy if already loaded
+    if ($script:CachedItems) {
+        return $script:CachedItems
+    }
 
     $Items = @()
 
-    foreach ($Category in @('Software', 'System', 'Cleanup')) {
+    foreach ($Category in @(
+        'Software',
+        'System',
+        'Cleanup',
+        'Security'
+    )) {
 
         try {
 
             $Url = "https://api.github.com/repos/$script:RepoOwner/$script:RepoName/contents/Public/$Category"
 
-            $Files = Invoke-RestMethod -Uri $Url
+            Write-Host "Loading $Category..." -ForegroundColor DarkGray
+
+            $Files = Invoke-RestMethod -Uri $Url -ErrorAction Stop
 
             foreach ($File in $Files) {
 
-                if ($File.name -notlike '*.ps1') { continue }
+                if ($File.name -notlike '*.ps1') {
+                    continue
+                }
 
                 $Items += [PSCustomObject]@{
                     Category = $Category
-                    Name = $File.name.Replace('.ps1', '')
-                    Url = $File.download_url
-                    Type = 'GitHub'
+                    Name     = [System.IO.Path]::GetFileNameWithoutExtension($File.name)
+                    Url      = $File.download_url
+                    Type     = 'GitHub'
                 }
             }
         }
         catch {
 
-            Write-Host ""
-            Write-Host "Unable to load category: $Category" -ForegroundColor Red
+            Write-Host ''
+            Write-Host "Failed to load category: $Category" -ForegroundColor Red
             Write-Host $_.Exception.Message -ForegroundColor Yellow
         }
     }
-    
 
-    }
+    $script:CachedItems = $Items
 
     return $Items
 }
 
+# ==================================================
+# Invoke-GitHubScript
+# Downloads a script from GitHub, loads it into the
+# current session, validates the function exists,
+# then executes it.
+# ==================================================
 function Invoke-GitHubScript {
-
 
     param(
         [Parameter(Mandatory)]
@@ -51,15 +79,17 @@ function Invoke-GitHubScript {
         [string]$FunctionName
     )
 
-    Write-Host ""
+    Write-Host ''
     Write-Host "Downloading $FunctionName..." -ForegroundColor Cyan
 
-    $Code = Invoke-RestMethod -Uri $Url
+    $Code = Invoke-RestMethod -Uri $Url -ErrorAction Stop
 
     Invoke-Expression $Code
 
-    if (-not (Get-Command $FunctionName -ErrorAction SilentlyContinue)) {
-        throw "Function '$FunctionName' was not loaded."
+    $Command = Get-Command $FunctionName -ErrorAction SilentlyContinue
+
+    if (-not $Command) {
+        throw "Function '$FunctionName' was not loaded from the downloaded script."
     }
 
     Write-Host "Executing $FunctionName..." -ForegroundColor Yellow
@@ -67,43 +97,72 @@ function Invoke-GitHubScript {
     & $FunctionName
 }
 
+# ==================================================
+# Invoke-PCBuildItem
+# Executes either a local function or a GitHub
+# sourced function.
+# ==================================================
 function Invoke-PCBuildItem {
+
     param(
         [Parameter(Mandatory)]
         $Item
     )
-    if ($Item.Type -eq 'BuiltIn') {
-        & $Item.Name
-    }
-    else {
-        Invoke-GitHubScript `
-            -Url $Item.Url `
-            -FunctionName $Item.Name
+
+    switch ($Item.Type) {
+
+        'BuiltIn' {
+            & $Item.Name
+        }
+
+        'GitHub' {
+            Invoke-GitHubScript `
+                -Url $Item.Url `
+                -FunctionName $Item.Name
+        }
+
+        default {
+            throw "Unknown item type: $($Item.Type)"
+        }
     }
 }
 
+# ==================================================
+# Show-PCBuildMenu
+# The Main interactive console menu, all dynamic baby.
+# ==================================================
 function Show-PCBuildMenu {
+
     do {
 
         Clear-Host
-        Write-Host "==================================================" -ForegroundColor DarkGreen
-        Write-Host "                  PC BUILD MENU" -ForegroundColor Green
-        Write-Host "==================================================" -ForegroundColor DarkGreen
-        Write-Host ""
+
+        Write-Host '==================================================' -ForegroundColor DarkGreen
+        Write-Host '                  PC BUILD MENU' -ForegroundColor Green
+        Write-Host '==================================================' -ForegroundColor DarkGreen
+        Write-Host ''
+
         $Items = Get-GitHubItems
         $Lookup = @{}
         $Index = 1
 
-        foreach ($Category in @('Software', 'System', 'Cleanup', 'Security')) {
+        foreach ($Category in @(
+            'Software',
+            'System',
+            'Cleanup',
+            'Security'
+        )) {
 
             $CategoryItems = $Items |
                 Where-Object Category -eq $Category |
                 Sort-Object Name
 
-            if (-not $CategoryItems) { continue }
+            if (-not $CategoryItems) {
+                continue
+            }
 
             Write-Host $Category.ToUpper() -ForegroundColor Cyan
-            Write-Host ("-" * $Category.Length)
+            Write-Host ('-' * $Category.Length)
 
             foreach ($Item in $CategoryItems) {
 
@@ -114,7 +173,7 @@ function Show-PCBuildMenu {
                     switch ($script:FunctionStatus[$Item.Name]) {
 
                         'Success' { $Color = 'Green' }
-                        'Failed' { $Color = 'Red' }
+                        'Failed'  { $Color = 'Red' }
                     }
                 }
 
@@ -126,29 +185,36 @@ function Show-PCBuildMenu {
                 $Index++
             }
 
-            Write-Host ""
+            Write-Host ''
         }
 
-        Write-Host " [0] Exit" -ForegroundColor Red
-        Write-Host ""
+        Write-Host ' [0] Exit' -ForegroundColor Red
+        Write-Host ''
 
-        $Choice = Read-Host "Selection"
+        $Choice = Read-Host 'Selection'
 
-        if ($Choice -eq '0') { break }
-        if ($Choice -notmatch '^\d+$') { continue }
+        if ($Choice -eq '0') {
+            break
+        }
+
+        if ($Choice -notmatch '^\d+$') {
+            continue
+        }
 
         $Choice = [int]$Choice
 
-        if (-not $Lookup.ContainsKey($Choice)) { continue }
+        if (-not $Lookup.ContainsKey($Choice)) {
+            continue
+        }
 
         $Item = $Lookup[$Choice]
 
         Clear-Host
 
-        Write-Host "==================================================" -ForegroundColor DarkCyan
+        Write-Host '==================================================' -ForegroundColor DarkCyan
         Write-Host " Running: $($Item.Name)" -ForegroundColor Cyan
-        Write-Host "==================================================" -ForegroundColor DarkCyan
-        Write-Host ""
+        Write-Host '==================================================' -ForegroundColor DarkCyan
+        Write-Host ''
 
         try {
 
@@ -156,26 +222,29 @@ function Show-PCBuildMenu {
 
             $script:FunctionStatus[$Item.Name] = 'Success'
 
-            Write-Host ""
+            Write-Host ''
             Write-Host "[SUCCESS] $($Item.Name)" -ForegroundColor Green
         }
         catch {
 
             $script:FunctionStatus[$Item.Name] = 'Failed'
 
-            Write-Host ""
+            Write-Host ''
             Write-Host "[FAILED] $($Item.Name)" -ForegroundColor Red
-            Write-Host $_.Exception.Message -ForegroundColor Red
+            Write-Host $_.Exception.Message -ForegroundColor Yellow
         }
 
-        Write-Host ""
-        Read-Host "Press Enter to return to the menu"
+        Write-Host ''
+        Read-Host 'Press Enter to return to the menu'
 
     } while ($true)
 }
 
+# ==================================================
+# Module Exports
+# ==================================================
 Export-ModuleMember -Function `
-    Get-GitHubItems,
-    Invoke-GitHubScript,
-    Invoke-PCBuildItem,
+    Get-GitHubItems, `
+    Invoke-GitHubScript, `
+    Invoke-PCBuildItem, `
     Show-PCBuildMenu
